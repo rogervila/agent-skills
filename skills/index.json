@@ -1,0 +1,11 @@
+{
+  "skills": [
+    {
+      "name": "performance-optimization",
+      "description": "A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput.",
+      "files": [
+        "SKILL.md"
+      ]
+    }
+  ]
+}

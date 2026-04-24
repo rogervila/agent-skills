@@ -1,0 +1,5 @@
+# Agents
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
