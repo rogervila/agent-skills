@@ -10,6 +10,7 @@ Agent Skills are folders of instructions, scripts, and resources that agents can
 <!-- START:Available-Skills -->
 | Skill | Description |
 | ----- | ----------- |
+| [action-pattern](./skills/action-pattern) | The Action pattern encapsulates a single use case or business operation into an invokable class with injected dependencies for organized, testable logic. |
 | [performance-optimization](./skills/performance-optimization) | A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput. |
 <!-- END:Available-Skills -->
 

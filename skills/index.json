@@ -1,6 +1,13 @@
 {
   "skills": [
     {
+      "name": "action-pattern",
+      "description": "The Action pattern encapsulates a single use case or business operation into an invokable class with injected dependencies for organized, testable logic.",
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
       "name": "performance-optimization",
       "description": "A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput.",
       "files": [

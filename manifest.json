@@ -16,6 +16,26 @@
   ],
   "skills": [
     {
+      "name": "action-pattern",
+      "description": "The Action pattern encapsulates a single use case or business operation into an invokable class with injected dependencies for organized, testable logic.",
+      "version": "1.0.0",
+      "source": "./skills/action-pattern",
+      "license": "MIT",
+      "keywords": [
+        "ai",
+        "agent",
+        "skill",
+        "action",
+        "pattern",
+        "use-case",
+        "business-logic",
+        "single-responsibility",
+        "invokable",
+        "testable",
+        "dependency-injection"
+      ]
+    },
+    {
       "name": "performance-optimization",
       "description": "A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput.",
       "version": "1.0.0",
