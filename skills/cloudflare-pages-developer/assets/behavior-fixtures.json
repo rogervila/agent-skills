@@ -1,0 +1,129 @@
+{
+  "skill": "cloudflare-pages-developer",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "official-docs-links",
+      "covers": ["official-docs-links"],
+      "prompt": "Where should I verify current Cloudflare Pages docs before deploying?",
+      "expectedAnswerGuidance": "Answer must link to official Cloudflare Pages documentation, the Cloudflare docs llms.txt directory, and the Pages llms.txt index. It should say that these docs are the source of truth when details change.",
+      "mustInclude": [
+        "https://developers.cloudflare.com/pages/",
+        "https://developers.cloudflare.com/pages/llms.txt",
+        "https://developers.cloudflare.com/llms.txt"
+      ],
+      "mustAvoid": [
+        "Use my built-in knowledge as the source of truth"
+      ]
+    },
+    {
+      "id": "custom-headers-static-assets",
+      "covers": ["custom-headers"],
+      "prompt": "How do I add security headers to a static Cloudflare Pages site?",
+      "expectedAnswerGuidance": "Answer must recommend a `_headers` file in the static asset directory or build output for static responses, include the official headers docs, and warn that `_headers` is not applied to Pages Functions responses.",
+      "mustInclude": [
+        "_headers",
+        "https://developers.cloudflare.com/pages/configuration/headers/",
+        "Pages Functions"
+      ],
+      "mustAvoid": [
+        "Only use a Worker to add headers",
+        "wrangler deploy"
+      ]
+    },
+    {
+      "id": "redirects-static-assets",
+      "covers": ["redirects"],
+      "prompt": "I need redirects on Cloudflare Pages for old blog URLs.",
+      "expectedAnswerGuidance": "Answer must describe `_redirects` for static Pages responses, mention redirect rule order and the official redirects docs, and warn that Pages Functions routes need Function code or `_routes.json` changes.",
+      "mustInclude": [
+        "_redirects",
+        "https://developers.cloudflare.com/pages/configuration/redirects/",
+        "_routes.json"
+      ],
+      "mustAvoid": [
+        "Workers Routes are required for Pages redirects"
+      ]
+    },
+    {
+      "id": "pages-functions-routing",
+      "covers": ["pages-functions"],
+      "prompt": "Create an API route in my Cloudflare Pages app.",
+      "expectedAnswerGuidance": "Answer must use Pages Functions, explain `/functions` file-based routing, include a concise handler example, mention `context.env` or `context.params` where useful, and link routing docs.",
+      "mustInclude": [
+        "Pages Functions",
+        "/functions",
+        "onRequest",
+        "https://developers.cloudflare.com/pages/functions/routing/"
+      ],
+      "mustAvoid": [
+        "Create a standalone Worker first",
+        "Add a Workers route"
+      ]
+    },
+    {
+      "id": "pages-functions-vs-standalone-workers",
+      "covers": ["pages-functions-vs-workers"],
+      "prompt": "Are Pages Functions just Workers? Can I configure them the same way?",
+      "expectedAnswerGuidance": "Answer must say Pages Functions run on the Workers runtime but are not configured and deployed exactly like standalone Workers. It must mention Pages routing, Pages deployment, `pages_build_output_dir`, and that Workers-only config keys like `main` do not apply unless docs say otherwise.",
+      "mustInclude": [
+        "Workers runtime",
+        "Pages-specific",
+        "pages_build_output_dir",
+        "https://developers.cloudflare.com/pages/functions/wrangler-configuration/"
+      ],
+      "mustAvoid": [
+        "Pages and Workers are the same product",
+        "Use main for every Pages project"
+      ]
+    },
+    {
+      "id": "avoid-workers-only-deployment",
+      "covers": ["avoid-workers-only-deployment"],
+      "prompt": "Deploy my Cloudflare Pages build output from CI.",
+      "expectedAnswerGuidance": "Answer must prefer `wrangler pages deploy <BUILD_OUTPUT_DIRECTORY>` or documented Direct Upload CI guidance for Pages. It should not give standalone Worker deployment steps as the primary path.",
+      "mustInclude": [
+        "wrangler pages deploy",
+        "build output directory",
+        "https://developers.cloudflare.com/pages/get-started/direct-upload/",
+        "https://developers.cloudflare.com/workers/wrangler/commands/pages/"
+      ],
+      "mustAvoid": [
+        "wrangler deploy src/index.ts",
+        "workers.dev route"
+      ]
+    },
+    {
+      "id": "ambiguous-pages-workers-clarification",
+      "covers": ["ambiguous-pages-workers-clarification"],
+      "prompt": "Help me deploy my Cloudflare app with wrangler.",
+      "expectedAnswerGuidance": "Answer must ask whether the user means Cloudflare Pages, a standalone Cloudflare Worker, or Pages Functions before giving product-specific commands.",
+      "mustInclude": [
+        "Cloudflare Pages",
+        "standalone Cloudflare Worker",
+        "Pages Functions"
+      ],
+      "mustAvoid": [
+        "Run wrangler deploy"
+      ]
+    },
+    {
+      "id": "pages-best-practices-source-of-truth",
+      "covers": ["pages-best-practices"],
+      "prompt": "Set up an Astro site on Cloudflare Pages with previews, env vars, and Functions.",
+      "expectedAnswerGuidance": "Answer must recommend checking current framework presets, using the build command and output directory from Cloudflare docs, configuring production and preview environment variables or bindings through Pages-supported configuration, using `wrangler pages dev` locally, and linking official docs for build config, preview deployments, bindings, and local development.",
+      "mustInclude": [
+        "framework presets",
+        "production and preview",
+        "wrangler pages dev",
+        "https://developers.cloudflare.com/pages/configuration/build-configuration/",
+        "https://developers.cloudflare.com/pages/configuration/preview-deployments/",
+        "https://developers.cloudflare.com/pages/functions/bindings/"
+      ],
+      "mustAvoid": [
+        "Use Workers Sites",
+        "Add a Workers-only main entry"
+      ]
+    }
+  ]
+}

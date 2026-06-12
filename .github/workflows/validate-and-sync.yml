@@ -98,12 +98,12 @@ jobs:
 
   validate-skills:
     needs: detect-changes
-    if: needs.detect-changes.outputs.skills_to_validate != '[]'
+    if: needs.detect-changes.outputs.skills != '[]'
     runs-on: ubuntu-slim
     strategy:
       fail-fast: false
       matrix:
-        skill: ${{ fromJson(needs.detect-changes.outputs.skills_to_validate) }}
+        skill: ${{ fromJson(needs.detect-changes.outputs.skills) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -123,6 +123,13 @@ jobs:
         uses: Flash-Brew-Digital/validate-skill@v1
         with:
           path: skills/${{ matrix.skill }}
+
+      - name: Run local skill validation
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          if [ -f "skills/${{ matrix.skill }}/scripts/validate-fixtures.js" ]; then
+            node "skills/${{ matrix.skill }}/scripts/validate-fixtures.js"
+          fi
 
   validate-plugins:
     needs: detect-changes

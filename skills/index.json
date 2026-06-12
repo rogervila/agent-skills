@@ -8,6 +8,16 @@
       ]
     },
     {
+      "name": "cloudflare-pages-developer",
+      "description": "Specialist guidance for building Cloudflare Pages projects, Pages Functions, deployments, configuration, redirects, headers, and Pages-vs-Workers boundaries using official Cloudflare docs.",
+      "files": [
+        "SKILL.md",
+        "assets/behavior-fixtures.json",
+        "references/official-documentation.md",
+        "scripts/validate-fixtures.js"
+      ]
+    },
+    {
       "name": "performance-optimization",
       "description": "A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput.",
       "files": [
