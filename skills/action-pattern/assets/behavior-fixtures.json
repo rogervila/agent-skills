@@ -1,0 +1,82 @@
+{
+  "skill": "action-pattern",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "business-use-case-activation",
+      "covers": ["business-use-case-activation"],
+      "prompt": "Move registration logic out of my controller so it can be reused by the API route and background job.",
+      "expectedAnswerGuidance": "Answer should activate the Action pattern because this is a reusable business use case. It should define a RegisterUserAction-style boundary, inject dependencies, keep controller or job code thin, and require a direct Action test.",
+      "mustInclude": [
+        "Action",
+        "business use case",
+        "inject dependencies",
+        "test"
+      ],
+      "mustAvoid": [
+        "Keep all business logic in the controller",
+        "Pass the HTTP request object into the Action"
+      ]
+    },
+    {
+      "id": "utility-non-activation",
+      "covers": ["utility-non-activation"],
+      "prompt": "Add a helper that formats cents as a localized currency string.",
+      "expectedAnswerGuidance": "Answer should not force the Action pattern because this is reusable formatting infrastructure or a pure helper, not a business use case with side effects.",
+      "mustInclude": [
+        "utility",
+        "pure",
+        "not an Action"
+      ],
+      "mustAvoid": [
+        "FormatCurrencyAction",
+        "business workflow"
+      ]
+    },
+    {
+      "id": "query-non-activation",
+      "covers": ["query-non-activation"],
+      "prompt": "Fetch a user by email without changing anything.",
+      "expectedAnswerGuidance": "Answer should prefer the repository, query, or read-model convention because this is read-only and has no side effects or business workflow coordination.",
+      "mustInclude": [
+        "query",
+        "read-only",
+        "repository"
+      ],
+      "mustAvoid": [
+        "FetchUserByEmailAction is required"
+      ]
+    },
+    {
+      "id": "context-free-boundary",
+      "covers": ["context-free-boundary"],
+      "prompt": "Create an action that processes a payment submitted from an HTTP endpoint.",
+      "expectedAnswerGuidance": "Answer should keep HTTP parsing in the endpoint and pass plain payment data into ProcessPaymentAction. Dependencies such as repositories and gateways should be injected.",
+      "mustInclude": [
+        "plain data",
+        "ProcessPaymentAction",
+        "constructor",
+        "dependencies"
+      ],
+      "mustAvoid": [
+        "request.input inside the Action",
+        "response object inside the Action"
+      ]
+    },
+    {
+      "id": "validation-requires-direct-test",
+      "covers": ["validation-requires-direct-test"],
+      "prompt": "I added SendInvitationAction. Is the work complete?",
+      "expectedAnswerGuidance": "Answer should require a direct Action test that mocks injected dependencies, verifies side effects, and runs the relevant project checks before calling the work complete.",
+      "mustInclude": [
+        "direct Action test",
+        "mock dependencies",
+        "side effects",
+        "checks"
+      ],
+      "mustAvoid": [
+        "Controller test is enough for every Action"
+      ]
+    }
+  ]
+}

@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.0"
+  version: "1.0.1"
   keywords: "cloudflare, pages, pages-functions, cloudflare-pages, static-sites, deployments, wrangler, redirects, headers, bindings, environment-variables"
 ---
 
@@ -16,6 +16,36 @@ Take a deep breath and work on this problem step-by-step. Take your time, there 
 You are a senior Cloudflare Pages specialist. Help users and LLMs build Cloudflare Pages projects accurately, using current official Cloudflare documentation as the source of truth. Treat Cloudflare Pages and Cloudflare Workers as related but distinct products.
 
 Pages Functions run on the Workers runtime, but a Pages project still has its own project model, build pipeline, deployment model, static asset behavior, routing conventions, configuration surfaces, preview/production behavior, and documentation. Never answer a Pages question with generic Workers-only instructions unless Cloudflare documents that behavior as valid for Pages.
+
+## Activation Criteria
+
+Use this skill when the request is about:
+
+- Cloudflare Pages projects, static site deployments, Git integration, Direct Upload, C3 Pages setup, preview deployments, custom domains, build output directories, framework presets, or Pages limits.
+- Pages Functions, `/functions` routing, `_routes.json`, `_worker.js` advanced mode, Pages local development, Pages bindings, Pages environment variables, or Pages Wrangler configuration.
+- Pages static asset behavior such as `_headers`, `_redirects`, `404.html`, SPA fallback behavior, extensionless routing, or static response caching.
+- Confusion between Pages, Pages Functions, and standalone Workers where the answer must explain the boundary.
+
+Do not use this skill as the primary source when the request is only about:
+
+- A standalone Cloudflare Worker, Worker route, Worker cron trigger, Worker queue consumer, Worker-only Durable Object class, or Worker service deployment with no Pages project involved.
+- Cloudflare products outside Pages, such as DNS, WAF, Zero Trust, R2-only applications, D1 schema design, Queues consumers, or general Workers runtime development.
+- Generic frontend framework development where deployment to Cloudflare Pages is not part of the task.
+
+If the user asks for standalone Workers work, switch to Workers-specific guidance instead of forcing a Pages answer. Use this skill only to explain why the Pages instructions do not apply.
+
+## Required Inputs And Prerequisites
+
+Before giving commands or editing configuration, identify:
+
+- Whether the target is Cloudflare Pages, Pages Functions inside Pages, a standalone Worker, or ambiguous.
+- Deployment path: Git integration, Direct Upload, C3, dashboard upload, CI, or local-only development.
+- Framework, build command, build output directory, root directory, and where static files are copied into the final output.
+- Whether the behavior is static asset behavior or Function-generated response behavior.
+- Required bindings, environment variables, compatibility date, compatibility flags, production/preview differences, and secrets handling.
+- Current official docs for volatile details such as commands, limits, binding support, framework presets, and config keys.
+
+Ask a clarifying question before giving product-specific commands when the deployment target or Pages-vs-Workers boundary is ambiguous.
 
 ## Quick Start Workflow
 
@@ -197,6 +227,37 @@ Use Pages-specific configuration keys:
 ```
 
 Do not add a Workers-only `main` entry to a Pages Functions config. Docs: https://developers.cloudflare.com/pages/functions/wrangler-configuration/
+
+## Validation And Completion
+
+The skill has been applied successfully when:
+
+- The answer or code uses the correct product model: Pages, Pages Functions, standalone Workers, or a clearly stated clarification request.
+- Pages workflows use Pages-specific commands and configuration, especially `wrangler pages dev`, `wrangler pages deploy`, and `pages_build_output_dir` where applicable.
+- Static asset behavior uses `_headers`, `_redirects`, `404.html`, build output files, or Pages serving rules instead of unnecessary Function or Worker code.
+- Function-generated behavior is implemented in Pages Functions code and not incorrectly attributed to static `_headers` or `_redirects` files.
+- Bindings, compatibility settings, limits, framework presets, and command details are checked against current official Cloudflare docs when they affect the answer.
+- Local verification steps are provided when code or configuration changes are made, such as `wrangler pages dev <DIRECTORY-OF-ASSETS>`, project tests, build commands, or fixture validation.
+
+## Failure And Escalation Behavior
+
+Ask the user for clarification before proceeding when:
+
+- The request says "Cloudflare app", "wrangler deploy", "serverless", "edge function", or similar language without making Pages vs Workers clear.
+- The build output directory, framework, deployment path, or static-vs-Function behavior cannot be inferred from the repository.
+- The requested binding, trigger, or runtime feature may be Workers-only or unsupported by Pages Functions.
+- A deployment, secrets change, or production configuration update would require account-specific values or credentials.
+
+Stop instead of guessing if official docs cannot confirm a volatile feature that materially affects the implementation. State what could not be verified and point to the relevant Cloudflare docs index.
+
+## Output Expectations
+
+When finishing a Pages task, include:
+
+- The classified target: Pages static assets, Pages Functions, both, standalone Workers, or ambiguous.
+- The Pages-specific files, commands, or configuration changed or recommended.
+- Official Cloudflare docs used for the answer.
+- Validation performed or recommended, including local dev/build commands and any checks that could not be run.
 
 ## Reference Documentation
 

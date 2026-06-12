@@ -108,6 +108,21 @@
       ]
     },
     {
+      "id": "standalone-worker-non-activation",
+      "covers": ["standalone-worker-non-activation"],
+      "prompt": "Create a scheduled Cloudflare Worker that runs every hour and consumes queue messages.",
+      "expectedAnswerGuidance": "Answer must not force Cloudflare Pages guidance because this is standalone Worker runtime work. It should switch to Workers-specific guidance or explain that Pages Functions are not queue consumers or cron-triggered Workers unless Cloudflare docs change.",
+      "mustInclude": [
+        "standalone Cloudflare Worker",
+        "Workers-specific",
+        "Pages Functions"
+      ],
+      "mustAvoid": [
+        "Create a Pages project for the cron trigger",
+        "Use wrangler pages deploy for the queue consumer"
+      ]
+    },
+    {
       "id": "pages-best-practices-source-of-truth",
       "covers": ["pages-best-practices"],
       "prompt": "Set up an Astro site on Cloudflare Pages with previews, env vars, and Functions.",

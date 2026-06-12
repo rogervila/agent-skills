@@ -1,25 +1,63 @@
 ---
 name: performance-optimization
-description: A high-performance coding skill focused on identifying bottlenecks, optimizing algorithms, and minimizing resource usage. It prioritizes profiling-driven refactoring, memory efficiency, and low-latency execution to maximize code throughput.
+description: Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.
 license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.0"
+  version: "1.0.1"
   keywords: "performance, optimization, efficiency, benchmarking, profiling, algorithms, complexity, big-o, memory, allocations, concurrency, parallelization, throughput, latency, hot-path, scalability"
 ---
 
 # Performance Optimization
 
-Take a deep breath and work on this problem step-by-step. Take your time, there is no hurry.
+Use this skill when performance is an explicit goal or an obvious risk: latency, throughput, memory, CPU, startup time, build time, I/O, database load, concurrency, or scalability. The objective is to make code faster or lighter without changing observable behavior, and to verify improvements with measurements whenever measurement is feasible.
 
-Every line of code you write, review, or refactor must be as efficient as the language and runtime allow. This skill applies universally — regardless of programming language, framework, or paradigm. Performance is not an afterthought; it is a first-class design constraint.
+Performance is a first-class design constraint, but correctness, security, and maintainability still set the boundaries. Prefer efficient choices when they are equally clear. Reserve invasive rewrites, clever micro-optimizations, and added complexity for measured hot paths or high-risk workloads.
 
-**Before writing any code**, pause and ask yourself:
+## Activation Criteria
 
-1. What is the most efficient way to express this logic?
-2. Am I introducing unnecessary work the machine must perform?
-3. Can this be done with fewer allocations, fewer iterations, or fewer instructions?
+Use this skill when the task includes:
+
+- Explicit performance terms such as optimize, speed up, slow, bottleneck, latency, throughput, memory, allocation, CPU, hot path, scalability, benchmark, profile, N+1, cache, or concurrency.
+- Code that runs frequently, handles large data, sits in request/build/render loops, or performs repeated I/O or database work.
+- Review of an implementation where algorithmic complexity, excessive allocations, blocking I/O, unbounded concurrency, or resource leaks are likely to cause real cost.
+- Choosing between otherwise similar implementations where one is clearly more efficient with no meaningful readability or correctness penalty.
+
+Do not use this skill as the primary lens when:
+
+- The user asks only for formatting, naming, documentation, product copy, or style cleanup.
+- The code is one-off setup, migration, test fixture generation, or administrative scripting and no performance concern is stated.
+- A change would trade away correctness, security, accessibility, compatibility, or clear repository conventions for speculative speed.
+- The repository already has a failing functional bug and no evidence that performance is the root cause.
+
+## Required Inputs And Prerequisites
+
+Before optimizing, gather as much of this context as the task allows:
+
+- The performance goal or symptom: target latency, throughput, memory ceiling, CPU limit, timeout, build duration, or user-visible slowdown.
+- The workload shape: input sizes, call frequency, data distribution, concurrency level, environment, and whether the path is CPU-bound or I/O-bound.
+- A baseline: profiler output, benchmark results, logs, query plans, traces, flamegraphs, reproduction steps, or a small benchmark you can run locally.
+- Correctness requirements and existing tests that must continue passing.
+- Repository constraints: language/runtime version, framework conventions, supported platforms, dependencies, and deployment limits.
+
+If no baseline exists, create a focused measurement when practical. If measurement is impossible, state the assumption and choose low-risk changes that are justified by complexity analysis or clearly redundant work.
+
+## Optimization Workflow
+
+1. **Define the metric.** Name what should improve and what must not regress.
+2. **Find the hot path.** Use profiling, tracing, query plans, logs, or code inspection tied to workload frequency.
+3. **Preserve behavior.** Run or add focused correctness tests before changing risky logic.
+4. **Choose the highest-leverage fix.** Prefer algorithmic improvements, batching, fewer allocations, streaming, indexes, caching, or bounded concurrency over cosmetic micro-tuning.
+5. **Keep the change narrow.** Optimize the bottleneck without broad rewrites or unrelated refactors.
+6. **Measure again.** Compare before/after numbers with the same workload or explain why only static validation was possible.
+7. **Document tradeoffs.** Note any complexity, cache invalidation, concurrency limits, or environment assumptions introduced by the optimization.
+
+Before writing code, pause and ask yourself:
+
+1. What is the dominant cost for this workload?
+2. Can I reduce algorithmic complexity, allocations, I/O round-trips, blocking, or contention?
+3. How will I verify the change did not alter behavior and actually improved the target metric?
 
 ## 1. Loops and Iteration
 
@@ -368,8 +406,6 @@ Do not micro-optimize at the cost of readability when:
 
 ## Applying This Skill
 
-Take a deep breath and work on this problem step-by-step. Take your time, there is no hurry.
-
 When writing or reviewing code, follow this checklist:
 
 1. **Identify the hot path.** Where will this code run most frequently?
@@ -386,13 +422,47 @@ When writing or reviewing code, follow this checklist:
 12. **Think about locality.** Is the data layout cache-friendly for the access pattern?
 13. **Validate with data.** When in doubt, profile. Don't guess where the bottleneck is.
 
-> **Every line of code has a cost. Write the line that costs the least.**
+> **Every line of code has a cost. Spend complexity only where the workload earns it.**
 
 ## Quick Start Workflow
 
-1. **Analyze**: Identify the hot-path and bottlenecks using profiling tools.
-2. **Refactor**: Apply the patterns in this skill (O-complexity, allocations, batching).
-3. **Validate**: Verify performance gains with benchmarks and ensure no regression.
+1. **Analyze**: Identify the hot path, bottleneck, and target metric using profiling tools or justified code inspection.
+2. **Refactor**: Apply the smallest effective change: better complexity, fewer allocations, batching, streaming, indexing, caching, bounded concurrency, or reduced synchronization.
+3. **Validate**: Run correctness checks and compare before/after performance with the same workload when feasible.
+
+## Validation And Completion
+
+The skill has been applied successfully when:
+
+- The target metric and workload are stated, or the agent explicitly explains the assumption used.
+- The likely bottleneck is identified with profiler data, benchmark data, query plans, logs, traces, or clear complexity analysis.
+- The implementation preserves observable behavior and keeps existing tests passing.
+- The optimization is scoped to the bottleneck and avoids unrelated rewrites.
+- Before/after evidence is reported when measurement is possible, including the command, workload, sample size, and result.
+- If benchmark noise or environment limits make results uncertain, the final answer says so and avoids overstating the gain.
+
+Use the repository's existing performance tools when available: benchmark suites, load tests, profilers, database `EXPLAIN`, flamegraphs, browser performance tooling, memory profilers, or runtime tracing. Do not add a new benchmarking framework unless it fits the project and the user asked for durable performance tests.
+
+## Failure And Escalation Behavior
+
+Ask the user for clarification or stop instead of guessing when:
+
+- The target workload, expected scale, or performance metric is essential but unknown.
+- A proposed optimization changes user-visible behavior, data consistency, ordering, security, accessibility, or compatibility.
+- The only plausible improvements require architectural changes, new infrastructure, paid services, schema migrations, or operational risk.
+- Existing tests are absent and the code path is too risky to optimize without first adding or requesting correctness coverage.
+
+When performance is not relevant to the user's request, do not force this skill. Prefer normal repository conventions while still choosing efficient code when it is equally simple.
+
+## Output Expectations
+
+When finishing a performance task, include:
+
+- The bottleneck or risk addressed.
+- The optimization made and why it should improve the target metric.
+- Correctness checks run.
+- Performance checks run, with before/after results when available.
+- Residual risks, measurement limits, or follow-up profiling targets.
 
 ## Reference Documentation
 
@@ -400,7 +470,8 @@ This skill follows general performance principles. No external references are re
 
 ## Scripts and Assets
 
-No specialized scripts or assets are included with this skill.
+- `assets/behavior-fixtures.json` - behavior fixtures for performance activation, non-activation, measurement, and validation guidance.
+- `scripts/validate-fixtures.js` - validates that this skill and its behavior fixtures cover required performance-optimization boundaries.
 
 ## License information
 

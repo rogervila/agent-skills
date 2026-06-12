@@ -1,33 +1,59 @@
 ---
 name: action-pattern
-description: The Action pattern encapsulates a single use case or business operation into an invokable class with injected dependencies for organized, testable logic.
+description: Guides agents to implement non-trivial business use cases as single-purpose Action classes or functions with explicit dependencies, context-free inputs, and direct tests.
 license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.0"
+  version: "1.0.1"
   keywords: "ai, agent, skill, action, pattern, use-case, business-logic, single-responsibility, invokable, testable, dependency-injection"
 ---
 
 # Action Pattern
 
-Take a deep breath and work on this problem step-by-step. Take your time, there is no hurry.
+Use this skill to design, implement, or review non-trivial application use cases as Actions: single-purpose classes or functions that receive dependencies explicitly, accept context-free runtime data, execute one business operation, and can be tested directly.
 
-The Action pattern encapsulates a specific business operation into a dedicated, single-purpose unit — a class or a function — that acts like an object-oriented function. Each Action does **one thing**, receives its dependencies explicitly, and is independently testable.
+This skill solves the "fat controller" and "god service" problem by moving business workflows out of entry points and broad services into small, named units such as `RegisterUserAction`, `ProcessPaymentAction`, or `SendInvitationAction`.
 
-**Before writing any business logic**, pause and ask yourself:
+## Activation Criteria
 
-1. Is this a business operation or use case? → **Action**.
-2. Is this reusable infrastructure code (HTTP clients, parsers, formatters)? → **Library/Utility** — not an Action.
-3. Does this operation belong in an existing Action or does it deserve its own? → One Action = one operation.
+Use this skill when the task is to:
+
+- Create, refactor, or review a business operation, use case, command, application service, or workflow.
+- Move logic out of a controller, route handler, CLI command, job, listener, or broad service.
+- Organize business rules that coordinate repositories, services, notifications, events, transactions, or external systems.
+- Make a use case independently testable without running through HTTP, CLI, queue, or framework entry points.
+
+Do not use this skill when the task is only to:
+
+- Build infrastructure or reusable utilities such as HTTP clients, parsers, formatters, validators, serializers, or SDK wrappers.
+- Add a pure data transformation with no dependencies or side effects.
+- Implement a simple read-only query, repository lookup, or trivial CRUD passthrough.
+- Build UI components, routing glue, schema definitions, migrations, or framework configuration unless they call an Action.
+
+If the request could mean either a business use case or a utility/infrastructure helper, inspect the surrounding code first. Ask for clarification only when the operation boundary or intended side effects remain unclear.
+
+## Required Inputs And Prerequisites
+
+Before acting, inspect the repository for:
+
+- Existing Action, use-case, command, service, CQRS, or domain-layer conventions.
+- Language, framework, dependency-injection container, test framework, and file naming style.
+- The entry point that will call the Action and the plain runtime data it can pass.
+- Dependencies the Action needs, such as repositories, gateways, services, other Actions, clocks, event buses, or transaction managers.
+- Existing tests for the same behavior, plus any domain rules or error cases that must be preserved.
+
+Ask the user before implementing when required business rules, transaction boundaries, side effects, authorization expectations, or return values cannot be inferred safely from the codebase.
 
 ## Quick Start Workflow
 
-1. **Identify** the business operation (e.g., create a user, process a payment, send an invitation).
-2. **Create** the Action class/function with the `Action` suffix.
-3. **Inject** dependencies via constructor (classes) or parameters (functions).
-4. **Write** the associated test alongside the Action.
-5. **Call** the Action from any entry point (controller, CLI command, job, event handler).
+1. **Classify** the requested behavior as a business operation, utility, query, or entry-point concern.
+2. **Locate** the smallest single operation the Action should own and name it with the `Action` suffix.
+3. **Design** a context-free input shape and explicit return value. Do not pass framework request, response, session, or CLI objects into the Action.
+4. **Inject** dependencies through the constructor for classes, or explicit parameters for functions.
+5. **Implement** only the business operation. Keep validation, transactions, events, and side effects inside the Action when they belong to the use case.
+6. **Call** the Action from thin entry points such as controllers, routes, commands, jobs, and listeners.
+7. **Test** the Action directly with mocked dependencies and run the relevant test suite.
 
 ## 1. Core Principles
 
@@ -950,7 +976,41 @@ When writing or reviewing code, follow this checklist:
 9. **Does the test mock dependencies?** Test the Action in isolation, not through the framework.
 10. **Does it return a result?** Let the caller decide what to do with the output.
 
-> **Every business operation is an Action. Every Action is tested. Every Action is independent.**
+> **Every non-trivial business operation deserves a clear home. Every Action is tested. Every Action is independent.**
+
+## 11. Validation And Completion
+
+The skill has been applied successfully when:
+
+- The operation is correctly classified as an Action-worthy business use case, or the agent clearly explains why an Action is not appropriate.
+- The Action has one responsibility, an `Action` suffix, plain runtime inputs, explicit dependencies, and a clear result or error behavior.
+- Framework-specific request, response, session, route, CLI, queue, or UI objects stay outside the Action.
+- The entry point that calls the Action is thin and contains only request parsing, authorization glue, response formatting, or framework integration.
+- A direct Action test exists or was updated, covers the happy path and important failures or side effects, and mocks injected dependencies.
+- Relevant repository checks pass, such as unit tests, type checks, linters, or framework-specific test commands.
+
+When reviewing rather than editing, report whether each of these checks passes and identify the smallest changes needed to reach compliance.
+
+## 12. Failure And Escalation Behavior
+
+Do not guess when the missing information changes business behavior. Ask the user for clarification when you cannot determine:
+
+- The exact operation boundary or whether multiple use cases are being combined.
+- Required side effects, transaction behavior, authorization rules, or event/notification semantics.
+- Whether the project wants the Action pattern instead of an existing service, command, handler, interactor, or CQRS convention.
+- The expected error contract or return type.
+
+If the request is clearly not Action-worthy, do not force the pattern. Use the repository's existing utility, query, repository, or infrastructure convention and explain the boundary briefly.
+
+## 13. Output Expectations
+
+When finishing a task with this skill, summarize:
+
+- The Action created, updated, or intentionally avoided.
+- The operation boundary and why it is one use case.
+- The dependencies injected and the plain runtime input shape.
+- The tests or checks run, including any that could not be run.
+- Any caller changes made to keep entry points thin.
 
 ## Reference Documentation
 
@@ -965,7 +1025,8 @@ This skill is based on the Action pattern as described in the software engineeri
 
 ## Scripts and Assets
 
-No specialized scripts or assets are included with this skill.
+- `assets/behavior-fixtures.json` - behavior fixtures for Action-pattern activation, non-activation, and validation guidance.
+- `scripts/validate-fixtures.js` - validates that this skill and its behavior fixtures cover required Action-pattern boundaries.
 
 ## License information
 

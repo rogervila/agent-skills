@@ -21,6 +21,7 @@ const requiredCoverage = [
   "pages-functions-vs-workers",
   "avoid-workers-only-deployment",
   "ambiguous-pages-workers-clarification",
+  "standalone-worker-non-activation",
   "pages-best-practices",
 ];
 
@@ -42,6 +43,8 @@ const requiredLinks = [
 ];
 
 const requiredSkillTerms = [
+  "Activation Criteria",
+  "Required Inputs And Prerequisites",
   "Cloudflare Pages",
   "Pages Functions",
   "standalone Workers",
@@ -56,6 +59,9 @@ const requiredSkillTerms = [
   "production and preview",
   "compatibility_date",
   "compatibility_flags",
+  "Validation And Completion",
+  "Failure And Escalation Behavior",
+  "Output Expectations",
 ];
 
 function assert(condition, message) {

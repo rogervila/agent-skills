@@ -1,0 +1,80 @@
+{
+  "skill": "performance-optimization",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "latency-bottleneck-activation",
+      "covers": ["latency-bottleneck-activation"],
+      "prompt": "This API endpoint gets slow at p95 when the request includes thousands of items. Optimize it.",
+      "expectedAnswerGuidance": "Answer should activate performance optimization, identify the target metric and workload, inspect the hot path, preserve behavior, make a focused optimization, and validate with before/after measurements when feasible.",
+      "mustInclude": [
+        "p95",
+        "hot path",
+        "baseline",
+        "before/after"
+      ],
+      "mustAvoid": [
+        "Rewrite the whole service without measuring"
+      ]
+    },
+    {
+      "id": "memory-pressure-activation",
+      "covers": ["memory-pressure-activation"],
+      "prompt": "Reduce memory usage while importing a large CSV file.",
+      "expectedAnswerGuidance": "Answer should focus on memory profiling, streaming or batching, avoiding full in-memory materialization, preserving behavior, and validating memory use.",
+      "mustInclude": [
+        "memory",
+        "streaming",
+        "batching",
+        "validate"
+      ],
+      "mustAvoid": [
+        "Load the entire file into memory"
+      ]
+    },
+    {
+      "id": "style-only-non-activation",
+      "covers": ["style-only-non-activation"],
+      "prompt": "Rename these variables and reformat the file to match the style guide.",
+      "expectedAnswerGuidance": "Answer should not use performance as the primary lens because this is a style-only request. It may still choose efficient equivalent code, but it should not introduce speculative optimizations.",
+      "mustInclude": [
+        "style",
+        "not performance",
+        "no speculative optimization"
+      ],
+      "mustAvoid": [
+        "Replace the algorithm without a performance requirement"
+      ]
+    },
+    {
+      "id": "missing-baseline-escalation",
+      "covers": ["missing-baseline-escalation"],
+      "prompt": "Make this faster, but I do not know what is slow.",
+      "expectedAnswerGuidance": "Answer should ask for or create a baseline when practical, identify workload assumptions, and prefer low-risk inspection or measurement before risky changes.",
+      "mustInclude": [
+        "baseline",
+        "workload",
+        "measure",
+        "assumption"
+      ],
+      "mustAvoid": [
+        "Claim a speedup without evidence"
+      ]
+    },
+    {
+      "id": "validation-requires-correctness-and-benchmark",
+      "covers": ["validation-requires-correctness-and-benchmark"],
+      "prompt": "I changed the cache and query batching. Is the optimization complete?",
+      "expectedAnswerGuidance": "Answer should require correctness tests, cache invalidation review, bounded resource behavior, and before/after benchmark or profiling results before calling the optimization complete.",
+      "mustInclude": [
+        "correctness tests",
+        "cache invalidation",
+        "before/after",
+        "benchmark"
+      ],
+      "mustAvoid": [
+        "Assume caching is always faster"
+      ]
+    }
+  ]
+}
