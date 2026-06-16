@@ -10,7 +10,7 @@ Agent Skills are folders of instructions, scripts, and resources that agents can
 <!-- START:Available-Skills -->
 | Skill | Description |
 | ----- | ----------- |
-| [action-pattern](./skills/action-pattern) | Guides agents to implement non-trivial business use cases as single-purpose Action classes or functions with explicit dependencies, context-free inputs, and direct tests. |
+| [action-pattern](./skills/action-pattern) | Guides agents to implement non-trivial business use cases as one-Action-per-file single-purpose classes or functions with explicit dependencies, context-free inputs, and direct tests. |
 | [cloudflare-pages-developer](./skills/cloudflare-pages-developer) | Specialist guidance for building Cloudflare Pages projects, Pages Functions, deployments, configuration, redirects, headers, and Pages-vs-Workers boundaries using official Cloudflare docs. |
 | [performance-optimization](./skills/performance-optimization) | Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation. |
 <!-- END:Available-Skills -->

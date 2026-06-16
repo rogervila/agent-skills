@@ -17,8 +17,8 @@
   "skills": [
     {
       "name": "action-pattern",
-      "description": "Guides agents to implement non-trivial business use cases as single-purpose Action classes or functions with explicit dependencies, context-free inputs, and direct tests.",
-      "version": "1.0.1",
+      "description": "Guides agents to implement non-trivial business use cases as one-Action-per-file single-purpose classes or functions with explicit dependencies, context-free inputs, and direct tests.",
+      "version": "1.0.2",
       "source": "./skills/action-pattern",
       "license": "MIT",
       "keywords": [

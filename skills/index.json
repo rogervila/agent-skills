@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "action-pattern",
-      "description": "Guides agents to implement non-trivial business use cases as single-purpose Action classes or functions with explicit dependencies, context-free inputs, and direct tests.",
+      "description": "Guides agents to implement non-trivial business use cases as one-Action-per-file single-purpose classes or functions with explicit dependencies, context-free inputs, and direct tests.",
       "files": [
         "SKILL.md",
         "assets/behavior-fixtures.json",

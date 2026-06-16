@@ -1,17 +1,17 @@
 ---
 name: action-pattern
-description: Guides agents to implement non-trivial business use cases as single-purpose Action classes or functions with explicit dependencies, context-free inputs, and direct tests.
+description: Guides agents to implement non-trivial business use cases as one-Action-per-file single-purpose classes or functions with explicit dependencies, context-free inputs, and direct tests.
 license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.1"
+  version: "1.0.2"
   keywords: "ai, agent, skill, action, pattern, use-case, business-logic, single-responsibility, invokable, testable, dependency-injection"
 ---
 
 # Action Pattern
 
-Use this skill to design, implement, or review non-trivial application use cases as Actions: single-purpose classes or functions that receive dependencies explicitly, accept context-free runtime data, execute one business operation, and can be tested directly.
+Use this skill to design, implement, or review non-trivial application use cases as Actions: single-purpose classes or functions that live in their own files, receive dependencies explicitly, accept context-free runtime data, execute one business operation, and can be tested directly.
 
 This skill solves the "fat controller" and "god service" problem by moving business workflows out of entry points and broad services into small, named units such as `RegisterUserAction`, `ProcessPaymentAction`, or `SendInvitationAction`.
 
@@ -39,6 +39,7 @@ Before acting, inspect the repository for:
 
 - Existing Action, use-case, command, service, CQRS, or domain-layer conventions.
 - Language, framework, dependency-injection container, test framework, and file naming style.
+- Existing file organization for Actions, while still enforcing one Action definition per source file for new or refactored Actions.
 - The entry point that will call the Action and the plain runtime data it can pass.
 - Dependencies the Action needs, such as repositories, gateways, services, other Actions, clocks, event buses, or transaction managers.
 - Existing tests for the same behavior, plus any domain rules or error cases that must be preserved.
@@ -51,7 +52,7 @@ Ask the user before implementing when required business rules, transaction bound
 2. **Locate** the smallest single operation the Action should own and name it with the `Action` suffix.
 3. **Design** a context-free input shape and explicit return value. Do not pass framework request, response, session, or CLI objects into the Action.
 4. **Inject** dependencies through the constructor for classes, or explicit parameters for functions.
-5. **Implement** only the business operation. Keep validation, transactions, events, and side effects inside the Action when they belong to the use case.
+5. **Implement** the Action in its own source file. Do not group multiple Actions in one module, even when Actions are plain functions.
 6. **Call** the Action from thin entry points such as controllers, routes, commands, jobs, and listeners.
 7. **Test** the Action directly with mocked dependencies and run the relevant test suite.
 
@@ -65,6 +66,19 @@ Each Action performs **exactly one** business operation. If you need a second pu
 - ✅ `SendInvitationAction` — sends an invitation
 - ❌ `UserAction` — vague, likely does too many things
 - ❌ `UserService` with `create()`, `update()`, `delete()` — this is a service, not an Action
+
+### One Action Per File
+
+Every Action must be defined in its own source file or module. This rule is mandatory for function-based Actions as well as class-based Actions.
+
+- ✅ `src/actions/auth/register-user.action.ts` exports `registerUserAction` and no other Action.
+- ✅ `src/actions/auth/verify-email.action.ts` exports `verifyEmailAction` and no other Action.
+- ❌ `src/actions/auth/user.actions.ts` exports `registerUserAction`, `verifyEmailAction`, and `resetPasswordAction` from one grouped file.
+- ❌ `src/actions/auth/actions.ts` collects several business operations because they share dependencies or types.
+
+Barrel files such as `src/actions/auth/index.ts` may re-export Actions from separate files, but they must not define Actions. Shared types may live next to a single Action when only that Action uses them; if multiple Actions need the same type or helper, move it to a separate type, utility, or domain-service file instead of grouping Actions together.
+
+The only acceptable same-file non-Action code is supporting code owned by that one Action, such as a private helper, a local input type, or a language-standard inline test block. Do not define a second Action in the file.
 
 ### Business Logic Only
 
@@ -100,12 +114,12 @@ class CreateUserAction {
 
 ## 2. Naming Conventions
 
-Use the `Action` suffix consistently across all languages.
+Use the `Action` suffix consistently across all languages, and give each Action its own file. File names should identify exactly one operation.
 
 | Language | Class/Function Name | File Name |
 |---|---|---|
 | PHP | `CreateUserAction` | `CreateUserAction.php` |
-| TypeScript | `CreateUserAction` (class) or `createUserAction` (function) | `createuser.action.ts` |
+| TypeScript | `CreateUserAction` (class) or `createUserAction` (function) | `create-user.action.ts` |
 | Python | `CreateUserAction` (class) or `create_user_action` (function) | `create_user_action.py` |
 | Go | `CreateUserAction` (struct) | `create_user_action.go` |
 | C# | `CreateUserAction` | `CreateUserAction.cs` |
@@ -115,21 +129,23 @@ Use the `Action` suffix consistently across all languages.
 
 ### Directory Structure
 
-Organize Actions under a dedicated directory, grouped by domain when the project grows:
+Organize Actions under a dedicated directory, grouped by domain directories when the project grows. Domain folders may group files; source files must not group Actions.
 
 ```
 src/
-└── Actions/
-    ├── Auth/
-    │   ├── RegisterUserAction
-    │   └── VerifyEmailAction
-    ├── Billing/
-    │   ├── ProcessPaymentAction
-    │   └── CancelSubscriptionAction
-    └── Team/
-        ├── CreateInvitationAction
-        └── RemoveMemberAction
+└── actions/
+    ├── auth/
+    │   ├── register-user.action.ts
+    │   └── verify-email.action.ts
+    ├── billing/
+    │   ├── process-payment.action.ts
+    │   └── cancel-subscription.action.ts
+    └── team/
+        ├── create-invitation.action.ts
+        └── remove-member.action.ts
 ```
+
+Do not create aggregate Action implementation files such as `auth.actions.ts`, `billing-actions.ts`, `actions.py`, or `UserActions.java`. Those files hide operation boundaries and make it too easy for one Action to grow into a service.
 
 ## 3. Dependency Injection
 
@@ -241,7 +257,7 @@ TypeScript Actions use a callable pattern via a dedicated method. Dependencies a
 **Action:**
 
 ```typescript
-// src/actions/auth/registeruser.action.ts
+// src/actions/auth/register-user.action.ts
 
 import { UserRepository } from '../../repositories/user.repository';
 import { PasswordHasher } from '../../services/password-hasher';
@@ -280,9 +296,9 @@ export class RegisterUserAction {
 **Test:**
 
 ```typescript
-// src/actions/auth/registeruser.action.test.ts
+// src/actions/auth/register-user.action.test.ts
 
-import { RegisterUserAction } from './registeruser.action';
+import { RegisterUserAction } from './register-user.action';
 import { UserRepository } from '../../repositories/user.repository';
 import { PasswordHasher } from '../../services/password-hasher';
 import { EmailService } from '../../services/email.service';
@@ -327,12 +343,12 @@ describe('RegisterUserAction', () => {
 
 ### TypeScript (Function-Based)
 
-When class-based Actions are not needed, use a plain function. All dependencies become parameters.
+When class-based Actions are not needed, use a plain function. All dependencies become parameters. A function-based Action still gets its own file; never export multiple Actions from a shared `*.actions.ts` module.
 
 **Action:**
 
 ```typescript
-// src/actions/auth/registeruser.action.ts
+// src/actions/auth/register-user.action.ts
 
 import { UserRepository } from '../../repositories/user.repository';
 import { PasswordHasher } from '../../services/password-hasher';
@@ -368,9 +384,9 @@ export async function registerUserAction(
 **Test:**
 
 ```typescript
-// src/actions/auth/registeruser.action.test.ts
+// src/actions/auth/register-user.action.test.ts
 
-import { registerUserAction } from './registeruser.action';
+import { registerUserAction } from './register-user.action';
 
 describe('registerUserAction', () => {
   it('should register a user and send welcome email', async () => {
@@ -924,7 +940,7 @@ class CreateTeamAction
 | Language | Action File | Test File |
 |---|---|---|
 | PHP | `CreateUserAction.php` | `CreateUserActionTest.php` |
-| TypeScript | `createuser.action.ts` | `createuser.action.test.ts` |
+| TypeScript | `create-user.action.ts` | `create-user.action.test.ts` |
 | Python | `create_user_action.py` | `test_create_user_action.py` |
 | Go | `create_user_action.go` | `create_user_action_test.go` |
 | C# | `CreateUserAction.cs` | `CreateUserActionTest.cs` |
@@ -968,13 +984,14 @@ When writing or reviewing code, follow this checklist:
 1. **Is this business logic?** If not, make it a library/utility.
 2. **Does it do one thing?** If it does two things, split into two Actions.
 3. **Is it context-free?** No HTTP requests, no CLI arguments, no session data inside the Action.
-4. **Are dependencies in the constructor?** Services and repositories go in the constructor; runtime data goes in the invocation method.
-5. **Does it use the `Action` suffix?** `CreateUserAction`, not `CreateUser` or `UserCreator`.
-6. **Is it invokable?** If the language supports callable classes, use the native mechanism.
-7. **Is it non-final?** Leave the class open for extension.
-8. **Does a test exist?** Every Action has a corresponding test. Creating an Action without a test is incomplete work.
-9. **Does the test mock dependencies?** Test the Action in isolation, not through the framework.
-10. **Does it return a result?** Let the caller decide what to do with the output.
+4. **Is it in its own file?** One source file defines one Action. Split grouped Actions before calling the work complete.
+5. **Are dependencies in the constructor?** Services and repositories go in the constructor; runtime data goes in the invocation method.
+6. **Does it use the `Action` suffix?** `CreateUserAction`, not `CreateUser` or `UserCreator`.
+7. **Is it invokable?** If the language supports callable classes, use the native mechanism.
+8. **Is it non-final?** Leave the class open for extension.
+9. **Does a test exist?** Every Action has a corresponding test. Creating an Action without a test is incomplete work.
+10. **Does the test mock dependencies?** Test the Action in isolation, not through the framework.
+11. **Does it return a result?** Let the caller decide what to do with the output.
 
 > **Every non-trivial business operation deserves a clear home. Every Action is tested. Every Action is independent.**
 
@@ -983,7 +1000,8 @@ When writing or reviewing code, follow this checklist:
 The skill has been applied successfully when:
 
 - The operation is correctly classified as an Action-worthy business use case, or the agent clearly explains why an Action is not appropriate.
-- The Action has one responsibility, an `Action` suffix, plain runtime inputs, explicit dependencies, and a clear result or error behavior.
+- The Action has one responsibility, its own source file, an `Action` suffix, plain runtime inputs, explicit dependencies, and a clear result or error behavior.
+- No file defines more than one Action. Grouped Action modules such as `user.actions.ts`, `actions.py`, or `UserActions.java` are split before completion.
 - Framework-specific request, response, session, route, CLI, queue, or UI objects stay outside the Action.
 - The entry point that calls the Action is thin and contains only request parsing, authorization glue, response formatting, or framework integration.
 - A direct Action test exists or was updated, covers the happy path and important failures or side effects, and mocks injected dependencies.
@@ -1008,6 +1026,7 @@ When finishing a task with this skill, summarize:
 
 - The Action created, updated, or intentionally avoided.
 - The operation boundary and why it is one use case.
+- The source file that owns the Action, especially when grouped Actions were split.
 - The dependencies injected and the plain runtime input shape.
 - The tests or checks run, including any that could not be run.
 - Any caller changes made to keep entry points thin.
@@ -1030,4 +1049,4 @@ This skill is based on the Action pattern as described in the software engineeri
 
 ## License information
 
-This skill is licensed under the [MIT License](LICENSE).
+This skill is licensed under the [MIT License](../../LICENSE).

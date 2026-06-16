@@ -64,6 +64,22 @@
       ]
     },
     {
+      "id": "one-action-per-file-typescript",
+      "covers": ["one-action-per-file", "typescript-function-actions"],
+      "prompt": "Add registerUserAction, verifyEmailAction, and resetPasswordAction in TypeScript. Can they all live in auth.actions.ts?",
+      "expectedAnswerGuidance": "Answer must reject grouping multiple Actions in one TypeScript module. Each function-based Action needs its own file, such as register-user.action.ts, verify-email.action.ts, and reset-password.action.ts. A barrel index.ts may re-export them but must not define Actions.",
+      "mustInclude": [
+        "one Action per file",
+        "function-based Action",
+        "register-user.action.ts",
+        "barrel"
+      ],
+      "mustAvoid": [
+        "Put all three Actions in auth.actions.ts",
+        "Multiple Actions can share one implementation file"
+      ]
+    },
+    {
       "id": "validation-requires-direct-test",
       "covers": ["validation-requires-direct-test"],
       "prompt": "I added SendInvitationAction. Is the work complete?",

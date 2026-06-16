@@ -17,6 +17,8 @@ const requiredCoverage = [
   "utility-non-activation",
   "query-non-activation",
   "context-free-boundary",
+  "one-action-per-file",
+  "typescript-function-actions",
   "validation-requires-direct-test",
 ];
 
@@ -27,6 +29,12 @@ const requiredSkillTerms = [
   "Validation And Completion",
   "Failure And Escalation Behavior",
   "Output Expectations",
+  "One Action Per File",
+  "one Action definition per source file",
+  "Do not group multiple Actions in one module",
+  "never export multiple Actions from a shared `*.actions.ts` module",
+  "Barrel files",
+  "Grouped Action modules",
   "context-free",
   "`Action` suffix",
   "Every Action must have an associated test",
