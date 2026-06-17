@@ -56,6 +56,26 @@
       ]
     },
     {
+      "name": "karpathy-guidelines",
+      "description": "General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks.",
+      "version": "1.0.0",
+      "source": "./skills/karpathy-guidelines",
+      "license": "MIT",
+      "keywords": [
+        "ai",
+        "agent",
+        "skill",
+        "coding-agent",
+        "software-engineering",
+        "karpathy",
+        "llm",
+        "workflow",
+        "verification",
+        "simplicity",
+        "code-review"
+      ]
+    },
+    {
       "name": "performance-optimization",
       "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.",
       "version": "1.0.1",

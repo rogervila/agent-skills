@@ -20,6 +20,15 @@
       ]
     },
     {
+      "name": "karpathy-guidelines",
+      "description": "General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks.",
+      "files": [
+        "SKILL.md",
+        "assets/behavior-fixtures.json",
+        "scripts/validate-fixtures.js"
+      ]
+    },
+    {
       "name": "performance-optimization",
       "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.",
       "files": [

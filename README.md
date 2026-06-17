@@ -12,6 +12,7 @@ Agent Skills are folders of instructions, scripts, and resources that agents can
 | ----- | ----------- |
 | [action-pattern](./skills/action-pattern) | Guides agents to implement non-trivial business use cases as one-Action-per-file single-purpose classes or functions with explicit dependencies, context-free inputs, and direct tests. |
 | [cloudflare-pages-developer](./skills/cloudflare-pages-developer) | Specialist guidance for building Cloudflare Pages projects, Pages Functions, deployments, configuration, redirects, headers, and Pages-vs-Workers boundaries using official Cloudflare docs. |
+| [karpathy-guidelines](./skills/karpathy-guidelines) | General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks. |
 | [performance-optimization](./skills/performance-optimization) | Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation. |
 <!-- END:Available-Skills -->
 

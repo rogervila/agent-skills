@@ -1,0 +1,182 @@
+{
+  "skill": "karpathy-guidelines",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "clarification-before-assumption",
+      "covers": ["clarification-before-assumption"],
+      "prompt": "Add validation to the signup form, but the product requirements do not say which fields are invalid.",
+      "expectedAnswerGuidance": "Answer should inspect existing validation first, identify material ambiguity, ask concise clarifying questions about invalid inputs, and avoid silently choosing product rules.",
+      "mustInclude": [
+        "inspect existing validation",
+        "clarifying question",
+        "invalid inputs",
+        "avoid silently choosing"
+      ],
+      "mustAvoid": [
+        "Assume the validation rules",
+        "Implement every possible validation without asking"
+      ]
+    },
+    {
+      "id": "surface-tradeoffs",
+      "covers": ["surface-tradeoffs"],
+      "prompt": "Persist the editor theme preference somewhere. Local storage and server-side settings both seem possible.",
+      "expectedAnswerGuidance": "Answer should surface the tradeoffs between local and server persistence, note existing project conventions if available, recommend a path, and avoid picking silently when user-visible behavior differs.",
+      "mustInclude": [
+        "tradeoffs",
+        "local storage",
+        "server-side",
+        "existing project conventions"
+      ],
+      "mustAvoid": [
+        "Pick one silently",
+        "Ignore sync and persistence behavior"
+      ]
+    },
+    {
+      "id": "pushback-unnecessary-complexity",
+      "covers": ["pushback-unnecessary-complexity"],
+      "prompt": "Build a plugin framework so this single CSV export can support other formats someday.",
+      "expectedAnswerGuidance": "Answer should push back on a plugin framework for one use case, propose a smaller focused formatter, and explain when a plugin boundary would become justified.",
+      "mustInclude": [
+        "push back",
+        "single use case",
+        "smaller",
+        "when justified"
+      ],
+      "mustAvoid": [
+        "Build a full plugin framework now",
+        "Add speculative extension points"
+      ]
+    },
+    {
+      "id": "simple-over-bloated",
+      "covers": ["simple-over-bloated"],
+      "prompt": "Implement a one-off mapper from an API response to a display label.",
+      "expectedAnswerGuidance": "Answer should prefer the smallest clear mapper or inline helper, avoid a bloated abstraction or configurable mapping framework, and keep the API narrow.",
+      "mustInclude": [
+        "smallest correct solution",
+        "one-off",
+        "narrow",
+        "avoid abstraction"
+      ],
+      "mustAvoid": [
+        "Mapping framework",
+        "Unnecessary configurability"
+      ]
+    },
+    {
+      "id": "avoid-unrelated-edits",
+      "covers": ["avoid-unrelated-edits"],
+      "prompt": "Fix the login button bug. The surrounding file has old comments and formatting I dislike.",
+      "expectedAnswerGuidance": "Answer should fix only the login button behavior, preserve unrelated comments and formatting, and mention unrelated cleanup separately if worth noting.",
+      "mustInclude": [
+        "surgical changes",
+        "preserve unrelated comments",
+        "unrelated cleanup separately",
+        "trace back to the request"
+      ],
+      "mustAvoid": [
+        "Reformat the whole file",
+        "Delete unrelated comments"
+      ]
+    },
+    {
+      "id": "preserve-existing-style",
+      "covers": ["preserve-existing-style"],
+      "prompt": "Add one test to this suite. The existing tests use factory helpers and nested describe blocks.",
+      "expectedAnswerGuidance": "Answer should match existing test style, reuse factories, avoid introducing a different testing pattern, and keep the new test focused.",
+      "mustInclude": [
+        "match existing style",
+        "reuse factories",
+        "focused test",
+        "avoid new pattern"
+      ],
+      "mustAvoid": [
+        "Introduce a new test framework",
+        "Rewrite nearby tests"
+      ]
+    },
+    {
+      "id": "success-criteria-for-vague-task",
+      "covers": ["success-criteria-for-vague-task"],
+      "prompt": "Make the import flow work better.",
+      "expectedAnswerGuidance": "Answer should define verifiable success criteria, such as the failing scenario, expected behavior, tests or manual reproduction, and validation checks before implementation.",
+      "mustInclude": [
+        "success criteria",
+        "failing scenario",
+        "expected behavior",
+        "validation checks"
+      ],
+      "mustAvoid": [
+        "Start coding without defining done",
+        "Make vague improvements"
+      ]
+    },
+    {
+      "id": "verification-before-completion",
+      "covers": ["verification-before-completion"],
+      "prompt": "I changed the parser. Can I call this done?",
+      "expectedAnswerGuidance": "Answer should require relevant tests, fixture or snapshot updates when applicable, type or lint checks if available, and honest reporting of any validation that cannot be run.",
+      "mustInclude": [
+        "tests",
+        "fixtures",
+        "type or lint checks",
+        "cannot be run"
+      ],
+      "mustAvoid": [
+        "Call it done without verification",
+        "Assume parser changes are safe"
+      ]
+    },
+    {
+      "id": "cleanup-own-artifacts-only",
+      "covers": ["cleanup-own-artifacts-only"],
+      "prompt": "Your refactor made an import unused, and there is also old dead code nearby.",
+      "expectedAnswerGuidance": "Answer should remove unused imports or variables introduced by its own changes, leave pre-existing dead code unless asked, and mention unrelated cleanup separately.",
+      "mustInclude": [
+        "introduced by its own changes",
+        "unused imports",
+        "pre-existing dead code",
+        "separately"
+      ],
+      "mustAvoid": [
+        "Delete old dead code without permission",
+        "Clean up everything nearby"
+      ]
+    },
+    {
+      "id": "separate-unrelated-observations",
+      "covers": ["separate-unrelated-observations"],
+      "prompt": "While fixing checkout validation, you notice the cart page has a performance issue.",
+      "expectedAnswerGuidance": "Answer should distinguish must-do work from unrelated observations, complete only the requested checkout validation, and mention the cart issue as a separate follow-up without fixing it unless asked.",
+      "mustInclude": [
+        "requested checkout validation",
+        "unrelated observation",
+        "separate follow-up",
+        "without fixing it"
+      ],
+      "mustAvoid": [
+        "Fix the cart performance issue in the same patch",
+        "Expand scope silently"
+      ]
+    },
+    {
+      "id": "offline-karpathy-summary",
+      "covers": ["offline-karpathy-summary"],
+      "prompt": "Use the Karpathy coding guidelines in an environment with no network access.",
+      "expectedAnswerGuidance": "Answer should rely on the embedded original attributed summary, not require fetching the X post or third-party skill at runtime, and apply the workflow gates from the local skill content.",
+      "mustInclude": [
+        "original summary",
+        "without network access",
+        "workflow gates",
+        "Karpathy"
+      ],
+      "mustAvoid": [
+        "Fetch the X post at runtime",
+        "Require the third-party skill to proceed"
+      ]
+    }
+  ]
+}
