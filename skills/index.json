@@ -30,10 +30,11 @@
     },
     {
       "name": "performance-optimization",
-      "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.",
+      "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, lazy initialization (including PHP 8.4+ lazy ghosts and proxies), and benchmark-backed validation.",
       "files": [
         "SKILL.md",
         "assets/behavior-fixtures.json",
+        "references/php-lazy-objects.md",
         "scripts/validate-fixtures.js"
       ]
     }

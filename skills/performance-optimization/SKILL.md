@@ -1,12 +1,12 @@
 ---
 name: performance-optimization
-description: Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.
+description: Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, lazy initialization (including PHP 8.4+ lazy ghosts and proxies), and benchmark-backed validation.
 license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.1"
-  keywords: "performance, optimization, efficiency, benchmarking, profiling, algorithms, complexity, big-o, memory, allocations, concurrency, parallelization, throughput, latency, hot-path, scalability"
+  version: "1.1.0"
+  keywords: "performance, optimization, efficiency, benchmarking, profiling, algorithms, complexity, big-o, memory, allocations, concurrency, parallelization, throughput, latency, hot-path, scalability, lazy-loading, php, lazy-objects, lazy-ghost, lazy-proxy"
 ---
 
 # Performance Optimization
@@ -19,10 +19,11 @@ Performance is a first-class design constraint, but correctness, security, and m
 
 Use this skill when the task includes:
 
-- Explicit performance terms such as optimize, speed up, slow, bottleneck, latency, throughput, memory, allocation, CPU, hot path, scalability, benchmark, profile, N+1, cache, or concurrency.
+- Explicit performance terms such as optimize, speed up, slow, bottleneck, latency, throughput, memory, allocation, CPU, hot path, scalability, benchmark, profile, N+1, cache, lazy loading, or concurrency.
 - Code that runs frequently, handles large data, sits in request/build/render loops, or performs repeated I/O or database work.
 - Review of an implementation where algorithmic complexity, excessive allocations, blocking I/O, unbounded concurrency, or resource leaks are likely to cause real cost.
 - Choosing between otherwise similar implementations where one is clearly more efficient with no meaningful readability or correctness penalty.
+- PHP 8.4+ code that builds expensive services, entities, or object graphs that are often never used, where native lazy objects can defer construction.
 
 Do not use this skill as the primary lens when:
 
@@ -230,6 +231,31 @@ if (expensiveCheck(x) && cheapCheck(x)) { ... }
 if (cheapCheck(x) && expensiveCheck(x)) { ... }
 ```
 
+### PHP 8.4+ Lazy Objects
+
+In PHP 8.4+ projects, defer expensive object construction with native lazy objects instead of hand-written proxies, generated proxy classes, or userland lazy traits. First confirm that `composer.json` and every runtime require PHP 8.4 or later. Do not use these APIs on PHP 8.3 or earlier.
+
+- **Prefer a lazy ghost** (`ReflectionClass::newLazyGhost()`): the initializer fills the same object in place, so identity is preserved.
+- **Use a lazy proxy** (`ReflectionClass::newLazyProxy()`) only when a factory you do not control must create the real instance. The proxy and the real instance are two different objects.
+- **Make objects lazy only when they are often unused** or their construction sits on a latency-critical path. Laziness moves cost; it does not remove it.
+- **Keep identifiers eager** with `ReflectionProperty::setRawValueWithoutLazyInitialization()` so reading an ID does not load the object.
+- **Watch for lazy N+1 and accidental initialization.** Property reads in loops, `json_encode()`, `get_object_vars()`, `foreach`, `clone`, and `serialize()` all initialize the object.
+- **Check the framework first.** Recent Symfony and Doctrine versions already use native lazy objects on PHP 8.4; enable that before writing custom Reflection code.
+
+```php
+// BAD — every request pays for the connection, even when it is never used
+$reports = new ReportService(new PdoConnection($dsn));
+
+// GOOD — PHP 8.4+: the connection is built on first property access
+$connection = (new ReflectionClass(PdoConnection::class))
+    ->newLazyGhost(function (PdoConnection $ghost) use ($dsn): void {
+        $ghost->__construct($dsn);
+    });
+$reports = new ReportService($connection);
+```
+
+Verify with `ReflectionClass::isUninitializedLazyObject()` how often the object is actually initialized, and compare before/after time and memory. See [references/php-lazy-objects.md](references/php-lazy-objects.md) for triggers, proxies, `resetAsLazyGhost()`, options, limitations, and measurement.
+
 ## 9. Caching
 
 **The fastest computation is the one you already did.**
@@ -386,7 +412,7 @@ This skill is language-agnostic, but the agent must apply language-specific know
 - **Rust:** Prefer stack allocation, use iterators over indexed loops, avoid unnecessary cloning, leverage zero-cost abstractions.
 - **C/C++:** Consider cache locality (struct of arrays vs array of structs), use SIMD where applicable, prefer move semantics over copies, minimize virtual dispatch in hot paths.
 - **SQL:** Use indexes, avoid SELECT *, use EXPLAIN to understand query plans, prefer set-based operations over cursors.
-- **PHP:** Prefer native array functions over manual loops, use generators for large datasets, avoid unnecessary object instantiation, use opcache effectively.
+- **PHP:** Prefer native array functions over manual loops, use generators for large datasets, avoid unnecessary object instantiation, use opcache effectively. On PHP 8.4+, defer expensive, often-unused objects with native lazy ghosts (preferred) or lazy proxies.
 - **C#/.NET:** Use `Span<T>` and `Memory<T>` to avoid allocations, prefer `ValueTask` for hot async paths, use `ArrayPool` for temporary buffers, avoid LINQ in hot paths due to delegate overhead.
 
 ## 17. What NOT to Optimize
@@ -466,7 +492,9 @@ When finishing a performance task, include:
 
 ## Reference Documentation
 
-This skill follows general performance principles. No external references are required at this time.
+This skill follows general performance principles. Language-specific references:
+
+- [references/php-lazy-objects.md](references/php-lazy-objects.md) - PHP 8.4+ native lazy objects: ghost vs proxy choice, initialization triggers, eager identifiers, `resetAsLazyGhost()`/`resetAsLazyProxy()`, options, limitations, lazy N+1 pitfalls, and measurement.
 
 ## Scripts and Assets
 

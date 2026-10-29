@@ -77,8 +77,8 @@
     },
     {
       "name": "performance-optimization",
-      "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, and benchmark-backed validation.",
-      "version": "1.0.1",
+      "description": "Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, lazy initialization (including PHP 8.4+ lazy ghosts and proxies), and benchmark-backed validation.",
+      "version": "1.1.0",
       "source": "./skills/performance-optimization",
       "license": "MIT",
       "keywords": [
@@ -97,7 +97,12 @@
         "throughput",
         "latency",
         "hot-path",
-        "scalability"
+        "scalability",
+        "lazy-loading",
+        "php",
+        "lazy-objects",
+        "lazy-ghost",
+        "lazy-proxy"
       ]
     }
   ]

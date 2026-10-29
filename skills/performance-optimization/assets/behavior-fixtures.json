@@ -75,6 +75,64 @@
       "mustAvoid": [
         "Assume caching is always faster"
       ]
+    },
+    {
+      "id": "php84-lazy-ghost-activation",
+      "covers": ["php84-lazy-ghost-activation"],
+      "prompt": "Our PHP 8.4 app builds a PDF renderer and a database connection during bootstrap on every request, but only a few requests use them. Reduce request latency.",
+      "expectedAnswerGuidance": "Answer should confirm PHP 8.4+ in composer.json and runtimes, measure how often the objects are used, prefer native lazy ghosts via ReflectionClass::newLazyGhost() so construction happens on first property access, keep identity intact, and validate with isUninitializedLazyObject() plus before/after timing and memory.",
+      "mustInclude": [
+        "PHP 8.4",
+        "newLazyGhost",
+        "isUninitializedLazyObject",
+        "before/after"
+      ],
+      "mustAvoid": [
+        "Hand-write a proxy class for every service"
+      ]
+    },
+    {
+      "id": "php84-lazy-proxy-external-factory",
+      "covers": ["php84-lazy-proxy-external-factory"],
+      "prompt": "In our PHP 8.4 project, a vendor factory creates the SDK client and we cannot change it. Make the client lazy.",
+      "expectedAnswerGuidance": "Answer should choose ReflectionClass::newLazyProxy() because a factory it does not control creates the real instance, explain that the proxy and real instance are different objects, warn about identity checks, and note the class compatibility rules for the real instance.",
+      "mustInclude": [
+        "newLazyProxy",
+        "factory",
+        "identity"
+      ],
+      "mustAvoid": [
+        "Claim the proxy and the real instance are the same object"
+      ]
+    },
+    {
+      "id": "php-pre-84-lazy-objects-non-activation",
+      "covers": ["php-pre-84-lazy-objects-non-activation"],
+      "prompt": "Our composer.json requires php ^8.2. Use lazy ghosts to speed up container boot.",
+      "expectedAnswerGuidance": "Answer should not use native lazy object APIs because they require PHP 8.4. It should point to composer.json and the runtime version, and suggest the framework's existing lazy services or closure factories, or upgrading PHP first.",
+      "mustInclude": [
+        "PHP 8.4",
+        "composer.json",
+        "not available"
+      ],
+      "mustAvoid": [
+        "Call ReflectionClass::newLazyGhost on PHP 8.2"
+      ]
+    },
+    {
+      "id": "php-lazy-n-plus-one-escalation",
+      "covers": ["php-lazy-n-plus-one-escalation"],
+      "prompt": "After we turned our PHP 8.4 entities into lazy ghosts, the listing page got slower.",
+      "expectedAnswerGuidance": "Answer should identify lazy N+1 initialization in loops and accidental initialization through json_encode, get_object_vars, foreach, clone, or serialize, propose batch loading or eager identifiers via setRawValueWithoutLazyInitialization, and confirm with initialization counts and before/after measurements.",
+      "mustInclude": [
+        "lazy N+1",
+        "batch",
+        "setRawValueWithoutLazyInitialization",
+        "initialization"
+      ],
+      "mustAvoid": [
+        "Make every object lazy"
+      ]
     }
   ]
 }
