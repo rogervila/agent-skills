@@ -20,6 +20,34 @@
       ]
     },
     {
+      "name": "equipment-developer",
+      "description": "Specialist guidance for building, testing, debugging, and maintaining Python applications scaffolded with Equipment (rogervila/equipment), covering the equipment new and compile CLI, the dependency-injector App container, .env and config interpolation, SQLAlchemy and Alembic, logging channels, sync and Redis queues, the scheduler, local and S3 storage, unittest testing, FastAPI entry points, fully typed code checked with mypy, and source-verified pitfalls.",
+      "files": [
+        "SKILL.md",
+        "assets/behavior-fixtures.json",
+        "references/cli-and-compilation.md",
+        "references/configuration.md",
+        "references/database.md",
+        "references/dependency-injection.md",
+        "references/deployment.md",
+        "references/fastapi.md",
+        "references/logging.md",
+        "references/maintaining-equipment.md",
+        "references/official-documentation.md",
+        "references/project-setup.md",
+        "references/queue.md",
+        "references/scheduler.md",
+        "references/storage.md",
+        "references/testing.md",
+        "references/typing.md",
+        "references/verified-behavior.md",
+        "scripts/check_code_examples.py",
+        "scripts/equipment_doctor.py",
+        "scripts/test_equipment_doctor.py",
+        "scripts/validate-fixtures.js"
+      ]
+    },
+    {
       "name": "karpathy-guidelines",
       "description": "General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks.",
       "files": [
