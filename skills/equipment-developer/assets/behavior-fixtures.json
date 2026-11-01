@@ -1,0 +1,365 @@
+{
+  "skill": "equipment-developer",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "official-docs-links",
+      "covers": [
+        "official-docs-links"
+      ],
+      "prompt": "Where can I read the current Equipment documentation before changing my project?",
+      "expectedAnswerGuidance": "Answer must point to the hosted Equipment docs, llms.txt, and llms-full.txt, mention that every page is available as Markdown by appending .md, and explain that the installed package source is the source of truth for runtime behavior when docs and code disagree.",
+      "mustInclude": [
+        "https://equipment-python.vercel.app/llms.txt",
+        "https://equipment-python.vercel.app/llms-full.txt",
+        "https://equipment-python.vercel.app/docs/intro",
+        "https://github.com/rogervila/equipment"
+      ],
+      "mustAvoid": [
+        "Use my built-in knowledge as the source of truth"
+      ]
+    },
+    {
+      "id": "activation-equipment-project",
+      "covers": [
+        "activation-equipment-project"
+      ],
+      "prompt": "My app/__init__.py has class App(Equipment) and config/*.yaml files. Add an InvoiceService that uses the database and logger.",
+      "expectedAnswerGuidance": "Answer must recognize an Equipment project, create the service under app/ with constructor injection, register it as a ThreadSafeSingleton provider on App in app/__init__.py using Equipment.database and Equipment.log, show usage through app(), and add a unittest test.",
+      "mustInclude": [
+        "app/__init__.py",
+        "Singleton",
+        "Equipment.database",
+        "Equipment.log",
+        "unittest"
+      ],
+      "mustAvoid": [
+        "from app import app inside the service method",
+        "pytest"
+      ]
+    },
+    {
+      "id": "non-activation-generic-python",
+      "covers": [
+        "non-activation-generic-python"
+      ],
+      "prompt": "Create a plain FastAPI service with SQLAlchemy and pytest. There is no Equipment in this repo.",
+      "expectedAnswerGuidance": "Answer must not force Equipment conventions (App container, config/*.yaml interpolation, equipment new) onto a project that does not use Equipment. It should use the libraries' own conventions and the test runner the user asked for.",
+      "mustInclude": [
+        "FastAPI",
+        "SQLAlchemy",
+        "pytest"
+      ],
+      "mustAvoid": [
+        "equipment new",
+        "class App(Equipment)"
+      ]
+    },
+    {
+      "id": "ambiguous-equipment-clarification",
+      "covers": [
+        "ambiguous-equipment-clarification"
+      ],
+      "prompt": "Help me set up equipment for my Python project.",
+      "expectedAnswerGuidance": "Answer must ask whether the user means the Equipment Python scaffolding framework (equipment new, rogervila/equipment) or something else, such as managing physical equipment data, before giving framework-specific commands.",
+      "mustInclude": [
+        "Equipment",
+        "scaffolding framework",
+        "equipment new"
+      ],
+      "mustAvoid": [
+        "Run equipment new without confirming"
+      ]
+    },
+    {
+      "id": "unittest-test-command",
+      "covers": [
+        "unittest-not-pytest",
+        "test-discovery-command"
+      ],
+      "prompt": "How do I run the tests of my Equipment project? python -m unittest discover -s tests fails with ImportError: cannot import name 'app' from 'app'.",
+      "expectedAnswerGuidance": "Answer must use unittest, explain that tests/app/ shadows the app package when tests/ is the top-level directory, and give python -m unittest or python -m unittest discover -s tests -t . run from the project root. It must mention installing the dev extra for faker.",
+      "mustInclude": [
+        "python -m unittest",
+        "-t .",
+        "tests/app",
+        ".[dev]"
+      ],
+      "mustAvoid": [
+        "pip install pytest",
+        "Rename the app package"
+      ]
+    },
+    {
+      "id": "first-run-env-setup",
+      "covers": [
+        "first-run-env-setup"
+      ],
+      "prompt": "I just ran equipment new my-app. Calling app.database() fails with ModuleNotFoundError: No module named 'mysql'. Why?",
+      "expectedAnswerGuidance": "Answer must explain that equipment new copies .env.example to .env, which sets DB_CONNECTION=mysql, APP_ENV=production, and DB_DATABASE=equipment. For local work it must recommend DB_CONNECTION=sqlite together with DB_DATABASE=database/database.sqlite, or installing mysql-connector-python for MySQL.",
+      "mustInclude": [
+        ".env.example",
+        "DB_CONNECTION=sqlite",
+        "DB_DATABASE=database/database.sqlite",
+        "mysql-connector-python"
+      ],
+      "mustAvoid": [
+        "Install mysqlclient for mysql+mysqlconnector"
+      ]
+    },
+    {
+      "id": "config-typing",
+      "covers": [
+        "config-typing"
+      ],
+      "prompt": "My config/payments.yaml has api_key: ${PAYMENTS_KEY:000123} and the service receives 83. What happened?",
+      "expectedAnswerGuidance": "Answer must explain that interpolation happens before YAML parsing, so unquoted values are YAML-typed (leading zero becomes octal, yes/no become booleans), and fix it by quoting the placeholder. It should mention .required() or .as_int() for injection where relevant.",
+      "mustInclude": [
+        "YAML",
+        "octal",
+        "\"${PAYMENTS_KEY:000123}\""
+      ],
+      "mustAvoid": [
+        "Environment values are always strings"
+      ]
+    },
+    {
+      "id": "database-alembic-autogenerate",
+      "covers": [
+        "database-alembic-autogenerate"
+      ],
+      "prompt": "alembic revision --autogenerate fails in my Equipment project with: Can't proceed with --autogenerate option; environment script env.py does not provide a MetaData object.",
+      "expectedAnswerGuidance": "Answer must explain that the generated database/migrations/env.py sets target_metadata = None, and show importing the app's declarative Base and setting target_metadata = Base.metadata, then running Alembic from database/migrations and reviewing the generated migration.",
+      "mustInclude": [
+        "database/migrations/env.py",
+        "target_metadata = Base.metadata",
+        "cd database/migrations"
+      ],
+      "mustAvoid": [
+        "Edit the equipment package in site-packages"
+      ]
+    },
+    {
+      "id": "queue-delayed-jobs",
+      "covers": [
+        "queue-redis-worker"
+      ],
+      "prompt": "I use app.queue().push_at(...) with QUEUE_CONNECTION=redis and python queues.py is running, but delayed jobs never execute.",
+      "expectedAnswerGuidance": "Answer must explain that the generated queues.py calls w.work() without the RQ scheduler, so scheduled jobs stay in the scheduled registry, and fix it with w.work(with_scheduler=True). It should restate that tasks must be module-level importable functions with small serializable arguments.",
+      "mustInclude": [
+        "with_scheduler=True",
+        "queues.py",
+        "module-level"
+      ],
+      "mustAvoid": [
+        "push_at is not supported",
+        "queue a lambda"
+      ]
+    },
+    {
+      "id": "redis-auth",
+      "covers": [
+        "redis-auth"
+      ],
+      "prompt": "I set REDIS_PASSWORD in .env but every push returns False and the log shows AuthenticationError.",
+      "expectedAnswerGuidance": "Answer must say that Equipment's RedisQueue and the generated queues.py ignore REDIS_USERNAME and REDIS_PASSWORD, and show overriding the queue provider in App with an authenticated factory, referencing the local queue provider in other registrations, plus passing username and password to Redis in queues.py.",
+      "mustInclude": [
+        "RedisQueue",
+        "REDIS_PASSWORD",
+        "queue = Singleton(",
+        "password="
+      ],
+      "mustAvoid": [
+        "Edit site-packages/equipment",
+        "Disable Redis authentication"
+      ]
+    },
+    {
+      "id": "scheduler-config-injection",
+      "covers": [
+        "scheduler-config-injection"
+      ],
+      "prompt": "I copied the docs example that calls self.config.app.env() inside my Scheduler.run and get AttributeError.",
+      "expectedAnswerGuidance": "Answer must explain that Equipment's Scheduler only sets log, schedule, and should_exit, and show injecting Equipment.config.app.env through the constructor and the App registration. It should also warn that job exceptions stop the scheduler loop.",
+      "mustInclude": [
+        "Equipment.config.app.env",
+        "__init__",
+        "super().run()"
+      ],
+      "mustAvoid": [
+        "self.config = app()"
+      ]
+    },
+    {
+      "id": "storage-safety-and-parity",
+      "covers": [
+        "storage-path-safety",
+        "storage-driver-parity"
+      ],
+      "prompt": "Save user uploads with app.storage() and later archive them by moving them to archive/<year>/.",
+      "expectedAnswerGuidance": "Answer must generate storage paths instead of using raw filenames, warn that ../ and absolute paths escape the local root, encode binary data, and explain that local move() returns False when the destination directory does not exist while S3 works, recommending a write-then-remove move and checking boolean results.",
+      "mustInclude": [
+        "uuid",
+        "move()",
+        "False",
+        "base64"
+      ],
+      "mustAvoid": [
+        "storage.write(uploaded_filename"
+      ]
+    },
+    {
+      "id": "logging-channels",
+      "covers": [
+        "logging-channels"
+      ],
+      "prompt": "What LOG_CHANNEL should I use in Docker, and why do my console logs appear on stderr?",
+      "expectedAnswerGuidance": "Answer must recommend LOG_CHANNEL=console with JSON in containers, explain that the console channel with stream: null uses StreamHandler and writes to stderr, warn that a string stream value does not work, and mention valid LOG_LEVEL names.",
+      "mustInclude": [
+        "LOG_CHANNEL=console",
+        "stderr",
+        "StreamHandler"
+      ],
+      "mustAvoid": [
+        "stream: ext://sys.stdout"
+      ]
+    },
+    {
+      "id": "test-isolation",
+      "covers": [
+        "test-isolation"
+      ],
+      "prompt": "A Mock I set with self.app.storage.override(Mock()) in one test shows up in another test.",
+      "expectedAnswerGuidance": "Answer must explain that app() returns one cached container per base path for the whole process, and fix it with self.enterContext(self.app.storage.override(mock)) or reset_override, plus reset_singletons() or provider reset() so dependents are rebuilt. It should warn that from_value() changes persist too.",
+      "mustInclude": [
+        "enterContext",
+        "cached",
+        "reset_singletons"
+      ],
+      "mustAvoid": [
+        "Each test gets a fresh container"
+      ]
+    },
+    {
+      "id": "compile-safety",
+      "covers": [
+        "compile-safety"
+      ],
+      "prompt": "equipment compile dist takes forever and dist is 120 MB.",
+      "expectedAnswerGuidance": "Answer must explain that equipment compile only skips __pycache__, dist, tests, equipment, and the output directory, so an in-project .venv and build/ get compiled, and that .env, storage/, and database/ are copied as-is. It should recommend keeping the virtualenv outside the project or compiling from a clean copy, deleting dist and build first, and reviewing dist/.env.",
+      "mustInclude": [
+        ".venv",
+        "build",
+        "dist/.env",
+        "python main.pyc"
+      ],
+      "mustAvoid": [
+        "equipment compile bundles dependencies"
+      ]
+    },
+    {
+      "id": "equipment-new-overwrite",
+      "covers": [
+        "equipment-new-safety"
+      ],
+      "prompt": "Can I run equipment new my-app again inside my existing project to get the latest template?",
+      "expectedAnswerGuidance": "Answer must warn that answering y merges the template over the project, replacing template files including app/__init__.py and .env while keeping extra files, and recommend generating into a new directory and diffing. It should also note that the command exits with code 0 even on failure.",
+      "mustInclude": [
+        "new directory",
+        ".env",
+        "app/__init__.py",
+        "exit code"
+      ],
+      "mustAvoid": [
+        "Answer y to update the template safely"
+      ]
+    },
+    {
+      "id": "maintainer-lazy-imports",
+      "covers": [
+        "maintainer-workflow"
+      ],
+      "prompt": "I'm contributing to the Equipment repo and want to import boto3 at the top of equipment/Storage/StorageFactory.py.",
+      "expectedAnswerGuidance": "Answer must explain that heavy optional dependencies must be imported lazily inside the factory branch, that tests/test_ImportPerformance.py enforces it, describe __lazy_modules__ and its mock.patch caveat on Python 3.15, and give the framework test command with unittest and the generated project validation workflow.",
+      "mustInclude": [
+        "test_ImportPerformance",
+        "__lazy_modules__",
+        "python -m coverage run -m unittest discover -s tests"
+      ],
+      "mustAvoid": [
+        "pytest",
+        "Add boto3 to requirements.txt"
+      ]
+    },
+    {
+      "id": "fastapi-thin-routes",
+      "covers": [
+        "fastapi-routes"
+      ],
+      "prompt": "Add a POST /reports/{id}/rebuild endpoint to my Equipment web app.",
+      "expectedAnswerGuidance": "Answer must add a thin route (in web.py or an APIRouter under app/routes/) that queues a module-level task and checks the push result, keep business logic in a registered service, and test it with FastAPI TestClient inside a unittest TestCase. It should note that with QUEUE_CONNECTION=sync the request blocks.",
+      "mustInclude": [
+        "APIRouter",
+        "push(",
+        "TestClient",
+        "QUEUE_CONNECTION=sync"
+      ],
+      "mustAvoid": [
+        "Put the business logic in the route function"
+      ]
+    },
+    {
+      "id": "deployment-process-model",
+      "covers": [
+        "deployment-process-model"
+      ],
+      "prompt": "How should I deploy an Equipment app with a web API, background jobs, and nightly tasks?",
+      "expectedAnswerGuidance": "Answer must describe separate web, worker (python queues.py with the RQ scheduler), and single scheduler processes started from the project root, production drivers (server database, Redis, S3, console logs), real environment variables instead of a shipped .env, and migrations as a release step.",
+      "mustInclude": [
+        "python queues.py",
+        "python scheduler.py",
+        "QUEUE_CONNECTION=redis",
+        "FILESYSTEM_DISK=s3",
+        "project root"
+      ],
+      "mustAvoid": [
+        "Run several scheduler replicas"
+      ]
+    },
+    {
+      "id": "typed-code",
+      "covers": [
+        "typed-code"
+      ],
+      "prompt": "Add a NotificationService to my Equipment app that writes messages to storage and logs them, plus a test.",
+      "expectedAnswerGuidance": "Answer must produce fully annotated code: constructor parameters typed with AbstractStorage and AbstractLogger, every method and test method with a return annotation including -> None, config values injected with concrete types, and a create_autospec-based test. It must verify with mypy using --explicit-package-bases --follow-untyped-imports plus the strict flags on the files it wrote.",
+      "mustInclude": [
+        "AbstractStorage",
+        "AbstractLogger",
+        "-> None",
+        "--follow-untyped-imports",
+        "--disallow-untyped-defs"
+      ],
+      "mustAvoid": [
+        "def __init__(self, storage, log):",
+        "# type: ignore\n"
+      ]
+    },
+    {
+      "id": "job-import-cycle",
+      "covers": [
+        "job-import-cycle"
+      ],
+      "prompt": "After adding from app.jobs.reports import rebuild_report to app/Scheduler.py, every command fails with ImportError: cannot import name 'app' from 'app'.",
+      "expectedAnswerGuidance": "Answer must explain the circular import: app/__init__.py imports app/Scheduler.py, which imports the job module, whose top-level from app import app runs before app() is defined. Fix by importing app inside the task function, keeping the typed task signature.",
+      "mustInclude": [
+        "circular",
+        "inside the task function",
+        "def rebuild_report(report_id: int) -> None:"
+      ],
+      "mustAvoid": [
+        "Move rebuild_report into app/__init__.py"
+      ]
+    }
+  ]
+}
