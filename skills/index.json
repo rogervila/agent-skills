@@ -65,6 +65,16 @@
         "references/php-lazy-objects.md",
         "scripts/validate-fixtures.js"
       ]
+    },
+    {
+      "name": "use-rtk",
+      "description": "Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering and summarization.",
+      "files": [
+        "SKILL.md",
+        "references/rtk-advanced-features.md",
+        "references/rtk-command-mappings.md",
+        "references/rtk-overview.md"
+      ]
     }
   ]
 }

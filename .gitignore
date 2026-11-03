@@ -1,9 +1,7 @@
-# Agents
 .agents/
 .claude/
 .windsurf/
 skills-lock.json
-
-# Python
 __pycache__/
 *.pyc
+.vscode/

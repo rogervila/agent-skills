@@ -140,6 +140,31 @@
         "lazy-ghost",
         "lazy-proxy"
       ]
+    },
+    {
+      "name": "use-rtk",
+      "description": "Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering and summarization.",
+      "version": "1.0.0",
+      "source": "./skills/use-rtk",
+      "license": "MIT",
+      "keywords": [
+        "rtk",
+        "rust-token-killer",
+        "token-optimization",
+        "token-reduction",
+        "cli-proxy",
+        "llm-efficiency",
+        "command-output",
+        "filtering",
+        "git",
+        "cargo",
+        "pytest",
+        "phpunit",
+        "jest",
+        "vitest",
+        "docker",
+        "kubectl"
+      ]
     }
   ]
 }
