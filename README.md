@@ -15,7 +15,7 @@ Agent Skills are folders of instructions, scripts, and resources that agents can
 | [equipment-developer](./skills/equipment-developer) | Specialist guidance for building, testing, debugging, and maintaining Python applications scaffolded with Equipment (rogervila/equipment), covering the equipment new and compile CLI, the dependency-injector App container, .env and config interpolation, SQLAlchemy and Alembic, logging channels, sync and Redis queues, the scheduler, local and S3 storage, unittest testing, FastAPI entry points, fully typed code checked with mypy, and source-verified pitfalls. |
 | [karpathy-guidelines](./skills/karpathy-guidelines) | General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks. |
 | [performance-optimization](./skills/performance-optimization) | Guides agents to improve performance with measured bottleneck analysis, efficient algorithms, lower allocations, better I/O patterns, lazy initialization (including PHP 8.4+ lazy ghosts and proxies), and benchmark-backed validation. |
-| [use-rtk](./skills/use-rtk) | Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering and summarization. |
+| [use-rtk](./skills/use-rtk) | Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering, pipelines, delegation, and proxy optimization. |
 <!-- END:Available-Skills -->
 
 ## Installation

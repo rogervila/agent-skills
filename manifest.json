@@ -143,8 +143,8 @@
     },
     {
       "name": "use-rtk",
-      "description": "Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering and summarization.",
-      "version": "1.0.0",
+      "description": "Tells LLMs to use RTK (Rust Token Killer) when the rtk command is available, reducing LLM token consumption by 60-90% through transparent command output filtering, pipelines, delegation, and proxy optimization.",
+      "version": "1.2.0",
       "source": "./skills/use-rtk",
       "license": "MIT",
       "keywords": [
@@ -156,6 +156,9 @@
         "llm-efficiency",
         "command-output",
         "filtering",
+        "pipeline",
+        "task-delegation",
+        "llm-proxy",
         "git",
         "cargo",
         "pytest",

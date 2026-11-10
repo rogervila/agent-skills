@@ -1,145 +1,112 @@
 ---
 name: "RTK Advanced Features"
-description: "RTK pipeline system, LLM proxy, plugin authoring, token analytics commands, bypass and recall recovery, and rewrite hook integration."
-tags: [rtk, pipeline, llm-proxy, plugins, token-analytics, bypass, recall, rewrite, hooks, gain, discover, session, telemetry, config, learn]
+description: "RTK Proxy daemon, token analytics and economics, session intelligence, bypass and recall recovery, hook integration details, and custom plugins."
+tags: [rtk, llm-proxy, rtk-proxy, token-analytics, gain, cc-economics, session, discover, learn, bypass, recall, hooks, plugins, config]
 ---
 
 # RTK Advanced Features
 
-This reference covers RTK features beyond basic command substitution: the pipeline system, LLM proxy, plugin authoring, analytics, bypass/recall recovery, and hook integration details.
+This guide details RTK's advanced operational capabilities beyond standard command wrapping: the RTK Proxy daemon, token economics analytics, session intelligence, hash-based recall recovery, hook architecture, and custom plugins.
 
-## The RTK Compression Pipeline
+## RTK Proxy (`rtk-proxy`)
 
-RTK's output filtering is implemented as a configurable pipeline of rules. Each rule applies a compression method to matching command output.
+The RTK Proxy daemon extends token optimization from terminal outputs to the provider-API requests your agent sends. Operating as a local background daemon, it intercepts conversation history, tool results, file bodies, and cache directives before forwarding requests to model endpoints.
 
-### Inspecting The Pipeline
-
-```bash
-# Show the resolved pipeline
-rtk pipeline show
-
-# Show a specific built-in literal
-rtk pipeline show rtk:default
-rtk pipeline show rtk:posthook
-
-# Validate all pipeline files (exits non-zero on errors)
-rtk pipeline validate
-
-# Explain what fires for a given agent/tool/format and why
-rtk pipeline explain
-
-# Check every loaded pipeline file: parse, resolve, validate
-rtk pipeline test
-
-# Run the resolved chain over a local file and report before/after tokens
-rtk pipeline bench <file>
-
-# Show the last recorded pipeline load problem
-rtk pipeline status
+```
+Claude Code ──▶ rtk-proxy ──▶ api.anthropic.com
+                   │
+                   ├─ normalize: strip ANSI / progress redraws / duplicate lines
+                   ├─ execute proxy.request rules from pipeline.toml
+                   ├─ place prompt-cache breakpoints (cache-align)
+                   └─ record usage ──▶ rtk gain
 ```
 
-### Pipeline Sharing And Discovery
+### Installation and Binaries
 
-RTK pipelines can be shared and adopted from the community:
+The daemon binary is named `rtk-proxy`. It is distributed as a standalone archive (`rtk-proxy-<target>`) licensed under BUSL-1.1 and is not bundled inside the `rtk` archive.
 
+Place `rtk-proxy` in the same directory as `rtk` or anywhere on your system `$PATH`.
+
+From source:
 ```bash
-# Share a pipeline (terminal card, or markdown when piped)
-rtk pipeline share
-rtk pipeline share --md
-
-# Find shared pipelines on GitHub (topic: rtk-pipeline)
-rtk pipeline search
-
-# Adopt a shared pipeline (validate, install, report requirements)
-rtk pipeline add <pipeline>
-
-# Shadow-evaluate an installed pipeline on live sessions (non-destructive)
-rtk pipeline eval <pipeline>
-
-# Promote a shadow-installed pipeline to live, or discard it
-rtk pipeline promote <pipeline>
-rtk pipeline promote --discard <pipeline>
-
-# View the opt-in decision log
-rtk pipeline log
+cargo build --release --manifest-path proxy/Cargo.toml
 ```
 
-### Pipeline Methods
+### The `rtk claude` Launcher
+
+For zero-configuration execution without modifying settings:
 
 ```bash
-# List registered compression methods and their contracts
-rtk methods
-
-# Author, list, and build your own pipeline methods (Rust plugins)
-rtk plugins list
-rtk plugins build
+rtk claude
 ```
 
-### Custom TOML Filters
+`rtk claude` checks if `rtk-proxy` is running (spawning it automatically if needed), sets `ANTHROPIC_BASE_URL` to the daemon's loopback endpoint, and replaces its process with `claude` using native `exec`. All signals, stdio, and exit codes remain intact.
 
-Projects can ship their own TOML filter rules. RTK requires explicit trust before using local filters.
+### Daemon Management Commands
 
-```bash
-# Trust project-local TOML filters in current directory
-rtk trust
-
-# Revoke trust for project-local TOML filters
-rtk untrust
-
-# Verify hook integrity and run TOML filter inline tests
-rtk verify
-```
-
-## LLM Proxy
-
-The LLM proxy is a separate RTK component that intercepts LLM API requests and compresses input tokens at the prompt level — not just command output. It operates transparently alongside the hook-based output filtering.
+Manage the daemon directly via `rtk llm-proxy`:
 
 ```bash
-# Check proxy daemon availability and agent compatibility
+# Verify daemon binary and list compatible agents
 rtk llm-proxy setup
 
-# Start the proxy as a background daemon
+# Launch proxy daemon in the background
 rtk llm-proxy start
 
-# Check proxy running status
+# Check running status and port connectivity
 rtk llm-proxy status
 
-# Print proxy usage stats
+# View live traffic and compression statistics
 rtk llm-proxy stats
 
-# Get or set runtime settings on a running proxy
+# Stop the proxy daemon
+rtk llm-proxy stop
+
+# Inspect or adjust runtime configuration
 rtk llm-proxy config
 
-# Manage a per-user background service
-rtk llm-proxy service
-
-# Stop the proxy
-rtk llm-proxy stop
+# Manage persistent per-user background service
+rtk llm-proxy service install
+rtk llm-proxy service start
+rtk llm-proxy service status
 ```
 
-When the LLM proxy is running, `rtk gain` automatically launches a live full-screen dashboard (`--watch` mode). Use `--text` to force the static view instead.
+### Binding to Custom Ports
 
-## Token Analytics
-
-### Savings Summary
+By default, the daemon binds to `127.0.0.1:8080`. Custom bindings can be configured with `--bind`:
 
 ```bash
-# Global token savings
+rtk llm-proxy start --bind 127.0.0.1:9090
+rtk llm-proxy status --bind 127.0.0.1:9090
+```
+
+### Proxy Compression Capabilities
+
+1. **Normalization**: Strips ANSI escape codes, terminal redraw sequences, and duplicate lines from tool results in conversation history.
+2. **Cache Alignment (`cache-align`)**: Places Anthropic prompt-cache breakpoints to maximize cache hits on turn prefixes.
+3. **Content-Addressed Context Reduction (CCR)**: Replaces large historical tool results in old conversation turns with compact retrieval tokens while preserving exact originals in `~/.config/rtk/llm-proxy/rtk-proxy-memory.db` for expansion if referenced.
+4. **Credential Borrowing**: Tasks routed through the proxy automatically reuse the agent's active API credential.
+
+## Token Analytics and Economics
+
+RTK measures exact character and byte reductions, converting them into estimated token metrics (`bytes / 4`).
+
+### `rtk gain` Dashboard
+
+```bash
+# Global token savings summary
 rtk gain
 
-# Current project only
+# Scope to current project only
 rtk gain --project
 
-# ASCII graph of daily savings
+# ASCII graph of daily savings (last 30 days)
 rtk gain --graph
 
-# Recent command history
+# Recent command history with before/after token counts
 rtk gain --history
 
-# Monthly quota savings estimate
-rtk gain --quota
-
-# Detailed daily breakdown
+# Day-by-day savings breakdown
 rtk gain --daily
 
 # Weekly breakdown
@@ -148,318 +115,281 @@ rtk gain --weekly
 # Monthly breakdown
 rtk gain --monthly
 
-# All time breakdowns (daily + weekly + monthly)
+# Comprehensive report (daily + weekly + monthly)
 rtk gain --all
 
-# Live full-screen dashboard
+# Live dashboard mode (default when rtk-proxy is running)
 rtk gain --watch
 
-# Force static text view even when llm-proxy is running
+# Force static text rendering
 rtk gain --text
 ```
 
-### Savings Attribution
+### Attribution Reporting
+
+Inspect exactly which parts of your setup contribute savings:
 
 ```bash
-# Per compression method
-rtk gain --by-method
-
-# Per pipeline rule
-rtk gain --by-rule
-
-# By token layer (read, tool_result, history, ...)
+# Sliced by token layer (read, write, tool_result, history, cache)
 rtk gain --by-layer
 
-# Per pipeline
+# Sliced by individual pipeline rule
+rtk gain --by-rule
+
+# Sliced by compression method (term, ansi, dedup, lockfile, etc.)
+rtk gain --by-method
+
+# Sliced by active pipeline
 rtk gain --by-pipeline
 
-# One pipeline's savings, sliced by where they land
-rtk gain --pipeline <name>
-
-# What shadow rules would have saved (recorded, never emitted)
+# View what shadow-mode rules would have saved
 rtk gain --shadow
-```
 
-### Output Formats
-
-```bash
-# Text (default)
-rtk gain --format text
-
-# JSON
-rtk gain --format json
-
-# CSV
-rtk gain --format csv
-```
-
-### Recall Efficiency
-
-```bash
-# Show recall efficiency per filter (elisions vs agent recalls)
+# Show recall efficiency (elisions vs agent recall requests)
 rtk gain --recalls
 
-# Show parse failure log (commands that fell back to raw execution)
+# View parse failure fallback log
 rtk gain --failures
 ```
 
-### Resetting Stats
+### Export Formats
 
 ```bash
-# Reset token savings and recall stats to zero
-rtk gain --reset
-
-# Skip confirmation prompt
-rtk gain --reset --yes
+rtk gain --format text    # Default text format
+rtk gain --format json    # Machine-readable JSON export
+rtk gain --format csv     # CSV spreadsheet export
 ```
 
-### Claude Code Economics
+### Claude Code Economics (`rtk cc-economics`)
+
+Analyzes net financial savings by cross-referencing actual provider spending data (`ccusage`) with token reductions achieved by RTK:
 
 ```bash
-# Compare Claude Code spending (ccusage) vs RTK savings
+# Spending vs savings analysis
 rtk cc-economics
+
+# Breakdowns
+rtk cc-economics --daily
+rtk cc-economics --weekly
+rtk cc-economics --monthly
+rtk cc-economics --all
+rtk cc-economics --format json
 ```
 
-## Session And Discovery Analytics
+## Session Intelligence and Learning
+
+### Session Adoption Tracking (`rtk session`)
+
+Inspects how consistently RTK was utilized across coding assistant sessions:
 
 ```bash
-# Show RTK adoption across Claude Code sessions
 rtk session
+```
 
-# Discover commands from the past 30 days that missed RTK optimization
+### Discovering Missed Savings (`rtk discover`)
+
+Scans transcript history to locate commands that were executed without RTK wrapping:
+
+```bash
+# Scan current project (past 30 days)
 rtk discover
 
-# Filter by current project
-rtk discover --project .
-
-# Scan all projects
+# Scan all local projects
 rtk discover --all
 
-# Limit to last N days
+# Limit scan to past N days
 rtk discover --since 7
 
-# Limit results per section
+# Limit results per category
 rtk discover --limit 10
 
-# JSON output
+# Export as JSON
 rtk discover --format json
 ```
 
-## Hook Integration
+### Automated Rule Learning (`rtk learn`)
 
-RTK provides hook processors for all major AI coding agents. These allow RTK to transparently rewrite commands before they run, without the agent needing to know about RTK.
-
-### Hook Processor Commands
+Scans agent error and retry history across sessions to discover repetitive mistakes and generate project-specific rules:
 
 ```bash
-# Process a hook (reads JSON from stdin, writes rewrite to stdout)
-rtk hook claude        # Claude Code PreToolUse
-rtk hook antigravity   # Google Antigravity PreToolUse
-rtk hook cursor        # Cursor Agent
-rtk hook gemini        # Gemini CLI BeforeTool
-rtk hook codex         # Codex CLI PreToolUse
-rtk hook trae          # Trae PreToolUse
-rtk hook copilot       # VS Code + Copilot CLI preToolUse
-rtk hook droid         # Factory Droid PreToolUse
-rtk hook vibe          # Mistral Vibe CLI pre_tool
-rtk hook opencode      # OpenCode plugin response
+# Scan error patterns in current project
+rtk learn
 
-# Dry-run: check how a command would be rewritten
-rtk hook check
+# Scan across all projects
+rtk learn --all
+
+# Filter by confidence threshold (0.0 - 1.0)
+rtk learn --min-confidence 0.8
+
+# Require minimum occurrence count
+rtk learn --min-occurrences 2
+
+# Write learned corrections directly into assistant rules file
+rtk learn --write-rules
 ```
 
-### `rtk rewrite` Exit Codes
+## Bypass and Content Recall
 
-`rtk rewrite <command>` is the single source of truth for hook rewrites.
+### Unfiltered Execution (`rtk bypass`)
 
-| Exit code | Meaning | Hook action |
-|---|---|---|
-| `0` | Rewrite printed; allow rules cover every command | Hook may auto-allow |
-| `1` | No rewrite available | Run the command unchanged |
-| `2` | A deny rule matched | Block the command |
-| `3` | Rewrite printed; ask rule matched or allow rules don't cover all commands | Use the rewrite, defer approval to host |
+When an RTK output filter produces malformed results, use `rtk bypass` to run the native binary directly without output manipulation. Usage remains tracked in `rtk gain` with 0% reduction:
 
 ```bash
-rtk rewrite "git status"
-# prints: rtk git status
-# exit 0
-
-rtk rewrite "some-unknown-tool"
-# no output
-# exit 1
-
-rtk rewrite "rm -rf /"
-# no output (deny)
-# exit 2
-```
-
-### Hook Audit
-
-```bash
-# Show hook rewrite audit metrics (requires RTK_HOOK_AUDIT=1)
-RTK_HOOK_AUDIT=1 rtk hook-audit
-```
-
-## Bypass And Recall Recovery
-
-### Bypass
-
-`rtk bypass` executes a command without filtering but still tracks usage. Use it only when a filtered output was genuinely unusable (empty when output was expected, contradicting exit code, or garbled).
-
-```bash
+# Raw execution of tests
 rtk bypass cargo test
-rtk bypass git diff HEAD~1
+
+# Raw git log
+rtk bypass git log -n 50
 ```
 
-> `rtk proxy` is a deprecated alias for `rtk bypass` — both work identically. Prefer `rtk bypass` in new instructions.
+> **Criteria for Bypass**: Use `rtk bypass` only when output was empty when output was clearly expected, contradicted the process exit code, or was garbled.
 
-### Recall
+### Elision Recovery (`rtk recall`)
 
-When RTK filters output, it can store elided content for later recall using a content hash shown in the recovery hint.
+When RTK truncates large outputs, it stores the elided content in a local database and prints a recovery hint with a content hash. Recover elided text without re-executing:
 
 ```bash
-# Recall elided content by hash (a unique prefix is enough)
-rtk recall abc123
+# Recall elided portion by hash prefix
+rtk recall 3f8a1b2c
 
-# Recall full output, not just the missed part
-rtk recall abc123 --full
+# Recall the entire original stream
+rtk recall 3f8a1b2c --full
 
-# Start from line N of the full output
-rtk recall abc123 --from 50
+# Retrieve lines starting at offset 100
+rtk recall 3f8a1b2c --from 100 --lines 50
 
-# Return only first N lines
-rtk recall abc123 --lines 20
+# Search through stored output
+rtk recall 3f8a1b2c --grep "FATAL"
 
-# Filter recalled lines by regex
-rtk recall abc123 --grep "ERROR"
-
-# List all stored entries
+# List all stored recall entries
 rtk recall --list
 ```
 
 ### Recall Mode Configuration
 
+Configure how RTK stores elisions in `~/.config/rtk/config.toml`:
+
 ```bash
-# Show or set recovery mode: sqlite | tee | disabled
-rtk config recall
-rtk config recall sqlite
-rtk config recall disabled
+rtk config recall sqlite    # Local SQLite store (default, supports full query flags)
+rtk config recall tee       # Temporary file tee
+rtk config recall disabled  # Disable recall storage
 ```
 
-## Pipe Mode (Unix Pipe)
+## Hook Integration Architecture
 
-RTK can filter stdin from any command in Unix pipe mode:
+RTK processes hook events from AI coding tools through dedicated hook processors:
 
 ```bash
-# Named filter
-cargo test 2>&1 | rtk pipe -f cargo-test
-pytest 2>&1 | rtk pipe -f pytest
-cat large-log.txt | rtk pipe -f git-log
-
-# Passthrough (no filtering, useful for debugging)
-some-command | rtk pipe --passthrough
+rtk hook claude        # Claude Code PreToolUse
+rtk hook antigravity   # Google Antigravity PreToolUse
+rtk hook cursor        # Cursor Agent hook
+rtk hook gemini        # Gemini CLI BeforeTool
+rtk hook codex         # Codex CLI PreToolUse
+rtk hook trae          # Trae PreToolUse
+rtk hook copilot       # Copilot preToolUse
+rtk hook droid         # Factory Droid PreToolUse
+rtk hook vibe          # Mistral Vibe CLI pre_tool
+rtk hook opencode      # OpenCode plugin
+rtk hook check         # Dry-run test of hook engine
 ```
 
-Available named filters: `cargo-test`, `pytest`, `phpunit`, `phpstan`, `pint`, `grep`, `find`, `git-log`.
+### Single Source of Truth: `rtk rewrite`
 
-## Learning From History
+The `rtk rewrite` command determines whether and how a command should be transformed before execution. Hook integrations evaluate this command and inspect its exit code:
 
-RTK can scan agent error history to identify CLI corrections worth persisting as rules:
+| Exit Code | Meaning | Action |
+|---|---|---|
+| `0` | Rewrite printed; covered by allow rules | Transparently execute rewritten command |
+| `1` | No rewrite available | Execute original command unchanged |
+| `2` | Deny rule matched | Block execution |
+| `3` | Rewrite printed but ask rule matched | Defer confirmation to user before execution |
 
+Example:
 ```bash
-# Scan current project sessions from last 30 days
-rtk learn
-
-# Scan all projects
-rtk learn --all
-
-# Limit to last N days
-rtk learn --since 7
-
-# Set minimum confidence threshold (0.0–1.0)
-rtk learn --min-confidence 0.8
-
-# Set minimum occurrence count to include in report
-rtk learn --min-occurrences 2
-
-# Generate .claude/rules/cli-corrections.md
-rtk learn --write-rules
-
-# JSON output
-rtk learn --format json
+rtk rewrite "git status"
+# Outputs: rtk git status
+# Exit code: 0
 ```
 
-## Configuration
+### Hook Auditing
+
+Audit hook rewrite activity by setting `RTK_HOOK_AUDIT=1`:
 
 ```bash
-# Show current config
-rtk config
-
-# Create default config file
-rtk config --create
-
-# Show or set recall mode
-rtk config recall
-rtk config recall sqlite
-rtk config recall tee
-rtk config recall disabled
+RTK_HOOK_AUDIT=1 rtk hook-audit --since 7
 ```
 
-## Telemetry
+### Hook Verification
+
+Verify hook configuration and rule health:
 
 ```bash
-# Manage telemetry consent and data (RGPD/GDPR)
-rtk telemetry
+rtk verify
 ```
 
-## Task Delegation
+## Custom Filters and Rust Plugins
 
-```bash
-# List configured delegation tasks and their bindings
-rtk tasks
+### Custom TOML Command Filters
+
+Custom command filters live in `~/.config/rtk/filters.toml` or project-local `.rtk/filters.toml`:
+
+```toml
+schema_version = 1
+
+[filters.custom-build]
+description          = "Custom internal build script"
+match_command        = "^build-internal\\b"
+strip_ansi           = true
+strip_lines_matching = ["^\\[DEBUG\\]", "^Downloading dependencies"]
+max_lines            = 150
+on_empty             = "(build succeeded with no warnings)"
+
+[[tests.custom-build]]
+name     = "removes debug lines"
+input    = "[DEBUG] connecting...\nBuild complete."
+expected = "Build complete."
 ```
 
-## Verbosity
-
-RTK supports three verbosity levels, recognized before the subcommand:
+Project-local filter files must be explicitly trusted:
 
 ```bash
-rtk -v <subcommand>     # Verbose
-rtk -vv <subcommand>    # More verbose
-rtk -vvv <subcommand>   # Most verbose
+# Trust project-local filters
+rtk trust
+
+# Revoke trust
+rtk untrust
+```
+
+### Rust Native Plugins
+
+Custom compression methods or task kinds can be authored in native Rust:
+
+```bash
+# Scaffold new plugin crate in ~/.config/rtk/plugins/
+rtk plugins new my-transform
+
+# List active and scaffolded plugins
+rtk plugins list
+
+# Compile custom rtk binary with plugins linked in
+rtk plugins build
 ```
 
 ## Environment Variables
 
 | Variable | Effect |
 |---|---|
-| `RTK_HOOK_AUDIT=1` | Enable hook rewrite audit metrics (used with `rtk hook-audit`) |
-| `SKIP_ENV_VALIDATION=1` | Skip environment variable validation for child processes (Next.js, tsc, lint, prisma) — can also be passed as `--skip-env` flag |
-| `RTK_REWRITE_HOST=openclaw` | For a delegate that gates commands itself — turns exit 3 into exit 0 |
-
-## Smart File Summary
-
-```bash
-# Generate a 2-line technical summary of a file (heuristic model)
-rtk smart <file>
-```
-
-## JSON Inspection
-
-```bash
-# Compact JSON values (default)
-rtk json <file>
-
-# Keys-only output
-rtk json --keys-only <file>
-```
+| `RTK_HOOK_AUDIT=1` | Activates hook rewrite audit logging |
+| `SKIP_ENV_VALIDATION=1` | Skips child process environment checks (`--skip-env`) |
+| `RTK_PROXY_BIND` | Default address for `rtk-proxy` (e.g. `127.0.0.1:9090`) |
+| `RTK_PROXY_RELAY_BORROWING=false` | Disables proxy credential borrowing for worker tasks |
+| `RTK_REWRITE_HOST=openclaw` | Treats exit code 3 as 0 for hosts that manage permissions |
 
 ## Best Practices
 
-- Use the pipeline system to share project-specific compression rules with the team via `rtk pipeline share` and `rtk pipeline add`.
-- Enable the LLM proxy with `rtk llm-proxy start` for additional input-token savings on top of output filtering.
-- Run `rtk discover` after onboarding a new project to identify commands that are running outside RTK's hook coverage.
-- Use `rtk learn --write-rules` to capture CLI corrections from past sessions as persistent rules.
-- Check `rtk gain --by-method` to understand which compression methods contribute most savings in your workflow.
-- Keep recall mode set to `sqlite` (default) so that elided content can always be recovered with `rtk recall`.
-- Audit hooks periodically with `rtk verify` to confirm hook integrity after agent or RTK updates.
+- Use `rtk claude` to launch Claude Code with automatic proxy routing and cache alignment.
+- Run `rtk gain --by-layer` to assess which token streams (reads, writes, or tool results) consume the most context in your projects.
+- Run `rtk discover` when onboarding existing repositories to find frequently executed commands missing optimization.
+- Use `rtk learn --write-rules` to turn repetitive command errors into persistent guardrail rules.
+- Rely on `rtk recall <hash>` before resorting to `rtk bypass` when debugging truncated test output.
+- Keep `rtk config recall` set to `sqlite` to retain recovery guarantees.

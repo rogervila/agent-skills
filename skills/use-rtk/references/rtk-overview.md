@@ -1,130 +1,186 @@
 ---
 name: "RTK Overview And Usage"
-description: "What RTK (Rust Token Killer) is, how it works, all subcommands with descriptions, installation, and initialization."
-tags: [rtk, rust-token-killer, token-optimization, cli-proxy, installation, initialization, subcommands, llm-efficiency]
+description: "What RTK (Rust Token Killer) is, how it works, editions, installation, agent initialization and coverage, subcommands, and best practices."
+tags: [rtk, rust-token-killer, token-optimization, cli-proxy, editions, installation, initialization, agent-coverage, subcommands, llm-efficiency]
 ---
 
 # RTK Overview And Usage
 
-Last checked: 2026-11-03.
+Last checked: 2026-11-10.
 
-RTK (Rust Token Killer) is an open-source CLI proxy that filters and summarizes terminal command output before it reaches the LLM context window, reducing token consumption by 60–90% with zero change to the agent's workflow or accuracy.
+RTK (Rust Token Killer) is an agent-agnostic token optimization system that filters, summarizes, routes, and compresses what AI coding agents read and send. Originally created as a high-performance CLI compressor for terminal command output (reducing bash output by 60–90%), RTK 1.x expands into a composable token-optimization engine across shell commands, file reads, web fetches, sub-agent communication, and model API traffic.
 
 Source repository: https://github.com/rtk-ai/rtk
+Documentation: https://www.rtk-ai.app
 
 ## What Problem RTK Solves
 
-AI coding agents read the full output of every command they run. Routine commands produce large volumes of boilerplate output that the agent must process:
+AI coding agents read full command outputs, file contents, and tool results into their context window. Routine developer commands produce massive volumes of boilerplate output that bloat context and dilute reasoning:
 
-- `git status` / `git diff` — dozens of lines including unchanged paths, mode lines, and index headers.
-- `cargo test` / `pytest` / `phpunit` — hundreds of lines of passing test output when only failures matter.
-- `ls -R` / `find` — deep recursive file listings with paths the LLM ignores.
-- `npm install` / `pip install` — progress bars, progress spinners, and download summaries.
+- `git status` / `git diff` — dozens of lines with unchanged paths, mode lines, index headers, and redundant context.
+- `cargo test` / `pytest` / `phpunit` / `jest` — hundreds of lines of passing test output when only failures matter.
+- `ls -R` / `find` — deep recursive file listings with paths the LLM does not need.
+- `npm install` / `pip install` — progress bars, spinners, and download summaries.
+- Large file reads — entire 1,000+ line files loaded into context when only structural signatures or specific answers are needed.
 
-RTK intercepts these outputs and passes only a concise signal back to the LLM: failures, errors, the file tree shape, the relevant diff lines. The agent sees less noise and costs less.
+RTK intercepts these streams and returns concise, signal-rich representations: errors, failures, file tree shapes, changed lines, and structured summaries. The agent gets all critical facts without token waste.
 
-## How RTK Works
+## How Token Savings Work
 
-RTK is a single Rust binary with zero runtime dependencies. It:
+RTK reduces the **bash output, tool results, and API payloads** your agent reads. 
 
-1. **Intercepts** the command before it runs (via a hook registered with the AI agent, or by direct invocation as `rtk <subcommand>`).
-2. **Runs** the native command internally.
-3. **Filters and summarizes** the output using per-tool compression rules (smart filtering, error grouping, truncation, deduplication).
-4. **Returns** the compressed output to the LLM's context.
+- **Bash output reduction**: RTK strips 60–90% of raw output bytes.
+- **Context dilution**: Bash output is only one contributor to input tokens alongside the prompt, system instructions, and conversation history. Total bill reduction is therefore a subset of raw command savings.
+- **Token estimation**: RTK reports estimated tokens as `bytes / 4`. Percentages are reliable metrics, while absolute token counts are close approximations.
+- **Prompt cache safety**: RTK filters output once per command. Compact outputs are cached normally by provider prompt caches, reducing cache write and read costs.
 
-RTK tracks input tokens, output tokens, and savings per command in a local database, accessible via `rtk gain`.
+## RTK Editions And Architecture
+
+RTK ships in three distinct artifacts:
+
+| Download | License | Contents |
+|---|---|---|
+| `rtk` (full edition) | Apache-2.0 + BUSL-1.1 | Hook core, all 100+ command filters, and the `rtk-engine` pipeline engine (evaluates `pipeline.toml`, tasks, judges, directives) |
+| `rtk-oss` | Apache-2.0 only | Hook core and command filters only. Does not include the pipeline engine. |
+| `rtk-proxy` | BUSL-1.1 | The standalone local HTTP daemon that intercepts and compresses provider-API traffic. Never bundled into `rtk`. |
+
+> Production use of both `rtk` and `rtk-proxy` is free under the BUSL-1.1 Additional Use Grant. Commercial resale as a hosted product requires a commercial license.
+
+Both `rtk` editions install a binary named `rtk`. They cannot be installed simultaneously; uninstall one before installing the other.
 
 ## Version
 
-RTK version in this environment: **1.1.0**
+RTK version in this environment: **1.2.0**
 
-Check the installed version with:
+Check installed version and health:
 
 ```bash
-rtk --version
+rtk --version   # Prints version (e.g. rtk 1.2.0)
+rtk gain        # Displays savings dashboard
 ```
 
 ## Installation
 
-> Install `rtk-ai/rtk`, not any unrelated package also named `rtk`.
+> Install `rtk-ai/rtk`, not any unrelated crate named `rtk`.
 
-### Linux and macOS (Quick Install)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-```
-
-### Homebrew (macOS and Linux)
+### Package Managers
 
 ```bash
-brew install rtk-ai/tap/rtk
-```
+# macOS and Linux (Homebrew)
+brew install rtk
 
-### Windows (WinGet)
+# macOS and Linux (Apache-2.0 OSS edition)
+brew install rtk-ai/tap/rtk-oss
 
-```powershell
+# Windows (WinGet)
 winget install rtk-ai.rtk
 ```
 
-### Cargo (from source, avoiding name collisions)
+### Quick Install Script
+
+```bash
+# Full edition (default)
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
+
+# OSS edition
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | RTK_EDITION=oss sh
+```
+
+### Building From Source
 
 ```bash
 cargo install --git https://github.com/rtk-ai/rtk --branch master rtk
 ```
 
-## Initialization
+## Agent Initialization
 
-After installing, initialize RTK for the AI assistant environment. This registers the hook that allows RTK to transparently rewrite commands before the agent runs them.
+After installation, initialize RTK for your AI assistant environment. This configures the appropriate hook or awareness rule so commands are automatically routed through RTK.
 
 ```bash
-# Initialize globally for a specific agent
-rtk init -g --agent antigravity   # Google Antigravity
-rtk init -g --agent claude        # Claude Code (default)
-rtk init -g --agent cursor        # Cursor
-rtk init -g --agent windsurf      # Windsurf
-rtk init -g --agent cline         # Cline / Roo Code
-rtk init -g --agent trae          # Trae IDE
-rtk init -g --agent kilocode      # Kilo Code
-rtk init -g --agent kimi          # Kimi AI
-rtk init -g --agent pi            # Pi coding agent
-rtk init -g --agent hermes        # Hermes CLI
-rtk init -g --agent droid         # Factory Droid CLI
-rtk init -g --agent vibe          # Mistral Vibe CLI
-rtk init -g --agent omp           # Oh My Pi (OMP)
+# Claude Code / Copilot (default)
+rtk init -g
 
-# Preview changes without writing files
+# Google Antigravity
+rtk init -g --agent antigravity
+
+# Cursor
+rtk init -g --agent cursor
+
+# Gemini CLI
+rtk init -g --gemini
+
+# Codex (OpenAI)
+rtk init -g --codex
+
+# Windsurf / Devin Desktop
+rtk init -g --agent windsurf
+
+# Trae IDE
+rtk init -g --agent trae
+
+# Other supported agents
+rtk init -g --agent cline       # Cline / Roo Code
+rtk init -g --agent kilocode    # Kilo Code
+rtk init -g --agent kimi        # Kimi AI
+rtk init -g --agent pi          # Pi
+rtk init -g --agent omp         # Oh My Pi (OMP)
+rtk init -g --agent hermes      # Hermes
+rtk init -g --agent droid       # Factory Droid
+rtk init -g --agent vibe        # Mistral Vibe
+
+# Preview changes without modifying files
 rtk init --dry-run
-
-# Preview changes with content shown
 rtk init --dry-run -v
 
-# Hook only (skip RTK.md injection)
-rtk init -g --hook-only
-
-# Apply changes without prompting
-rtk init -g --auto-patch
-
-# Verify hook integrity after setup
+# Verify hook integrity
 rtk verify
 
-# Uninstall
+# Uninstall hook configuration
 rtk init --uninstall
 ```
 
-The `-g` flag installs into the global assistant config directory rather than a local project file.
+## Agent Coverage Matrix
+
+How much of a pipeline an agent can execute depends on what its hook API permits:
+
+| Agent | Command Rewrite | Command Block | Compress Output | Add Context | Session Start | Route via Proxy |
+|---|---|---|---|---|---|---|
+| **Claude Code** | Yes | Yes | **Yes** | Yes | Yes | Yes (`rtk claude`) |
+| **Copilot CLI** | Yes | Yes | **Yes** | Yes | Yes | Yes |
+| **Hermes** | Yes | Yes | **Yes** | Yes | Yes | Yes |
+| **Kilo Code** | Yes | Yes | **Yes** | Yes | — | Yes |
+| **Mistral Vibe** | Yes | Yes | **Yes** | Yes | — | — |
+| **Oh My Pi** | Yes | Yes | **Yes** | Yes | Yes | Yes |
+| **OpenCode** | Yes | Yes | **Yes** | Yes | — | — |
+| **Pi** | Yes | Yes | **Yes** | Yes | Yes | — |
+| **Cursor** | Yes | Yes | MCP only | Yes | Yes | — |
+| **Codex** | Yes | Yes | — | Yes | Yes | Yes |
+| **Copilot (VS Code)** | Yes | Yes | — | Yes | Yes | — |
+| **Factory Droid** | Yes | Yes | — | Yes | Yes | — |
+| **Gemini CLI** | Yes | Yes | — | Yes | Yes | Yes |
+| **OpenClaw** | Yes | Yes | — | — | Yes | Yes |
+| **Trae** | Yes | Yes | — | Yes | Yes | — |
+| **Windsurf / Devin** | Yes | Yes | — | Yes | Yes | — |
+| **Antigravity** | — | Yes | — | — | — | — |
+| **Cline** | — | Yes | — | Yes | — | Yes |
+| **Kimi Code** | — | Yes | — | — | Yes | Yes |
+| **Roo Code** | — | — | — | — | — | Yes |
+
+> In environments like Google Antigravity, Cline, and Kimi Code where the host API does not permit mutating tool arguments or tool results in place, `rtk init` installs a rules file instructing the agent to invoke `rtk <command>` directly.
 
 ## Complete Subcommand Reference
 
-All subcommands available in RTK 1.1.0:
+All subcommands available in RTK 1.2.0:
 
-### File System
+### File System & Search
 
 | Subcommand | Description |
 |---|---|
 | `rtk ls [paths...]` | List directory contents with token-optimized output (proxy to native `ls`) |
 | `rtk tree [path]` | Directory tree with token-optimized output (proxy to native `tree`) |
-| `rtk read <files...>` | Read file(s) with intelligent filtering. Flags: `--level`, `--max-lines`, `--head-lines`, `--tail-lines`, `--line-numbers` |
-| `rtk find [flags]` | Find files with compact tree output; accepts native `find` flags such as `-name`, `-type` |
+| `rtk read <files...>` | Read file(s) with intelligent filtering (`--level`, `--max-lines`, `--head-lines`, `--tail-lines`, `--line-numbers`) |
+| `rtk smart <file>` | Generate 2-line technical summary of a file (heuristic-based) |
+| `rtk find [flags]` | Find files with compact tree output (accepts native `find` flags like `-name`, `-type`) |
 | `rtk grep [args]` | Compact grep — strips whitespace, truncates, groups by file |
 | `rtk rg [args]` | Compact ripgrep — runs `rg` natively, same output filter as `rtk grep` |
 | `rtk ast-grep [args]` | Compact ast-grep — runs `ast-grep` natively, groups matches by file |
@@ -156,7 +212,7 @@ All subcommands available in RTK 1.1.0:
 | `rtk jest [args]` | Jest commands with compact output |
 | `rtk vitest [args]` | Vitest commands with compact output |
 | `rtk next [cmd]` | Next.js build with compact output |
-| `rtk ng [cmd]` | Angular build with compact tables; other commands pass through |
+| `rtk ng [cmd]` | Angular build with compact tables (`rtk ng build`, `rtk ng test`) |
 | `rtk prisma [cmd]` | Prisma commands with compact output (no ASCII art) |
 | `rtk playwright [args]` | Playwright E2E tests with compact output |
 | `rtk deno [cmd]` | Deno runtime commands with compact output |
@@ -167,7 +223,7 @@ All subcommands available in RTK 1.1.0:
 |---|---|
 | `rtk pytest [args]` | Pytest test runner with compact output |
 | `rtk mypy [args]` | Mypy type checker with grouped error output |
-| `rtk ruff [args]` | Ruff linter/formatter with compact output |
+| `rtk ruff [args]` | Ruff linter/formatter with compact output (`check`, `format`) |
 | `rtk pip [args]` | Pip package manager with compact output (auto-detects uv) |
 | `rtk uv [cmd]` | uv run with compact output while preserving uv-managed environment semantics |
 
@@ -175,14 +231,14 @@ All subcommands available in RTK 1.1.0:
 
 | Subcommand | Description |
 |---|---|
-| `rtk cargo [subcommand]` | Cargo commands with compact output |
+| `rtk cargo [subcommand]` | Cargo commands with compact output (`test`, `build`, `clippy`, `check`) |
 
 ### Go
 
 | Subcommand | Description |
 |---|---|
-| `rtk go [cmd]` | Go commands with compact output |
-| `rtk golangci-lint [cmd]` | golangci-lint wrapper with compact `run` support and passthrough for other invocations |
+| `rtk go [cmd]` | Go commands with compact output (`test`, `build`) |
+| `rtk golangci-lint [cmd]` | golangci-lint wrapper with compact `run` support |
 
 ### PHP
 
@@ -205,30 +261,30 @@ All subcommands available in RTK 1.1.0:
 | `rtk rubocop [args]` | RuboCop linter with compact output (Ruby) |
 | `rtk rake [args]` | Rake/Rails test with compact Minitest output (Ruby) |
 
-### Java / JVM / Scala
+### Java / JVM / Scala / CTest
 
 | Subcommand | Description |
 |---|---|
-| `rtk mvn [cmd]` | Apache Maven wrapper with compact output (test, integration-test, compile, package, install, verify, deploy) |
-| `rtk mvnd [cmd]` | Maven Daemon (mvnd) with compact output — same filters as `rtk mvn` |
+| `rtk mvn [cmd]` | Apache Maven wrapper with compact output |
+| `rtk mvnd [cmd]` | Maven Daemon (mvnd) with compact output |
 | `rtk sbt [cmd]` | SBT (Scala Build Tool) commands with compact output |
-| `rtk gradlew [cmd]` | Android Gradle wrapper with compact output (build, test, lint) |
+| `rtk gradlew [cmd]` | Android Gradle wrapper with compact output |
 | `rtk ctest [args]` | CTest with compact output |
 
 ### .NET
 
 | Subcommand | Description |
 |---|---|
-| `rtk dotnet [cmd]` | .NET commands with compact output (build/test/restore/format) |
+| `rtk dotnet [cmd]` | .NET commands with compact output (`build`, `test`, `restore`, `format`) |
 
-### SQL
+### Databases & SQL
 
 | Subcommand | Description |
 |---|---|
 | `rtk psql [args]` | PostgreSQL client with compact output (strip borders, compress tables) |
-| `rtk sqlfluff [args]` | SQLFluff SQL linter with compact output |
+| `rtk sqlfluff [args]` | SQLFluff SQL linter with compact output (`lint`, `fix`) |
 
-### Infrastructure
+### Infrastructure & Cloud
 
 | Subcommand | Description |
 |---|---|
@@ -237,94 +293,81 @@ All subcommands available in RTK 1.1.0:
 | `rtk oc [cmd]` | OpenShift CLI (`oc`) commands with compact output |
 | `rtk aws [cmd]` | AWS CLI with compact output (force JSON, compress) |
 
-### Network
+### Network & Web
 
 | Subcommand | Description |
 |---|---|
 | `rtk curl [args]` | Curl with auto-JSON detection and schema output |
 | `rtk wget [args]` | Download with compact output (strips progress bars) |
 
-### General-Purpose
+### General-Purpose Execution & Pipe Mode
 
 | Subcommand | Description |
 |---|---|
 | `rtk test <cmd>` | Run tests and show only failures |
 | `rtk err <cmd>` | Run command and show only errors/warnings |
 | `rtk summary <cmd>` | Run command and show heuristic summary |
-| `rtk smart <file>` | Generate 2-line technical summary of a file (heuristic-based) |
 | `rtk json [args]` | Show JSON (compact values by default, or keys-only with `--keys-only`) |
 | `rtk log [args]` | Filter and deduplicate log output |
 | `rtk env [args]` | Show environment variables (filtered) |
 | `rtk deps [args]` | Summarize project dependencies |
-| `rtk pipe [args]` | Read stdin, apply filter, print filtered output (Unix pipe mode) |
-| `rtk run [args]` | Execute argv directly, or a command string through an explicit shell |
+| `rtk pipe [args]` | Read stdin, apply named filter, print filtered output (Unix pipe mode) |
+| `rtk run [args]` | Execute argv directly, or a command string through an explicit shell (`-c`) |
 | `rtk bypass [args]` | Execute command without filtering but track usage |
 | `rtk recall [hash]` | Recall output a filter elided, by content hash |
 
-### Analytics And Diagnostics
+### Pipeline Engine & Methods
 
 | Subcommand | Description |
 |---|---|
-| `rtk gain [flags]` | Show token savings summary and history |
-| `rtk discover [flags]` | Discover missed RTK savings from agent session history |
-| `rtk session [flags]` | Show RTK adoption across agent sessions |
+| `rtk pipeline <cmd>` | Inspect, validate, test, benchmark, share, and evaluate compression pipelines |
+| `rtk methods [cmd]` | List registered compression methods (`rtk methods list`) and their contracts |
+| `rtk tasks [cmd]` | List configured delegation tasks (`rtk tasks list`) and upstream bindings |
+| `rtk plugins <cmd>` | Author, list, and build your own pipeline methods in Rust (`new`, `list`, `build`) |
+| `rtk trust` | Trust project-local TOML filters and pipelines in current directory |
+| `rtk untrust` | Revoke trust for project-local TOML filters and pipelines |
+| `rtk verify` | Verify hook integrity and run filter inline tests |
+
+### Analytics & Diagnostics
+
+| Subcommand | Description |
+|---|---|
+| `rtk gain [flags]` | Show token savings summary, graphs, and attribution history |
+| `rtk discover [flags]` | Discover missed RTK savings opportunities from session history |
+| `rtk session [flags]` | Show RTK adoption across coding assistant sessions |
+| `rtk cc-economics [flags]`| Claude Code economics: spending (ccusage) vs savings (rtk) analysis |
+| `rtk learn [flags]` | Learn CLI corrections from assistant error history and generate rules |
 | `rtk hook-audit` | Show hook rewrite audit metrics (requires `RTK_HOOK_AUDIT=1`) |
-| `rtk cc-economics` | Claude Code economics: spending (ccusage) vs savings (rtk) analysis |
 
-### Configuration And Pipeline
-
-| Subcommand | Description |
-|---|---|
-| `rtk config [cmd]` | Show or modify configuration |
-| `rtk rewrite [args]` | Rewrite a raw command to its RTK equivalent (single source of truth for hooks) |
-| `rtk pipeline <cmd>` | Inspect, validate, and test the compression pipeline |
-| `rtk methods` | List registered compression methods and their contracts |
-| `rtk plugins <cmd>` | Author, list, and build your own pipeline methods (Rust plugins) |
-| `rtk tasks` | List configured delegation tasks and their bindings |
-| `rtk trust` | Trust project-local TOML filters in current directory |
-| `rtk untrust` | Revoke trust for project-local TOML filters |
-| `rtk verify` | Verify hook integrity and run TOML filter inline tests |
-
-### Hook Integration
+### LLM Proxy & Launchers
 
 | Subcommand | Description |
 |---|---|
-| `rtk hook claude` | Process Claude Code PreToolUse hook (reads JSON from stdin) |
-| `rtk hook antigravity` | Process Google Antigravity PreToolUse hook (reads JSON from stdin) |
-| `rtk hook cursor` | Process Cursor Agent hook (reads JSON from stdin) |
-| `rtk hook gemini` | Process Gemini CLI BeforeTool hook (reads JSON from stdin) |
-| `rtk hook codex` | Process Codex CLI PreToolUse hook (reads JSON from stdin) |
-| `rtk hook trae` | Process Trae PreToolUse hook (reads JSON from stdin) |
-| `rtk hook copilot` | Process Copilot preToolUse hook (VS Code + Copilot CLI, reads JSON from stdin) |
-| `rtk hook droid` | Process Factory Droid PreToolUse hook (reads JSON from stdin) |
-| `rtk hook vibe` | Process Mistral Vibe CLI pre_tool hook (reads JSON from stdin) |
-| `rtk hook opencode` | Answer for OpenCode's plugin |
-| `rtk hook check` | Check how a command would be rewritten by the hook engine (dry-run) |
-
-### LLM Proxy
-
-| Subcommand | Description |
-|---|---|
-| `rtk llm-proxy setup` | Check the daemon is available and report which AI agents can be pointed at it |
+| `rtk claude` | Launch Claude Code routed through `rtk-proxy` (starts daemon automatically) |
+| `rtk llm-proxy setup` | Check proxy daemon availability and compatible agents |
 | `rtk llm-proxy start` | Launch the proxy as a background daemon |
-| `rtk llm-proxy stop` | Ask a running proxy to shut down |
-| `rtk llm-proxy status` | Check whether the proxy is running and reachable |
-| `rtk llm-proxy stats` | Print usage stats from a running proxy |
-| `rtk llm-proxy config` | Get/set runtime settings on a running proxy |
-| `rtk llm-proxy service` | Manage a per-user background service |
+| `rtk llm-proxy stop` | Stop the running proxy daemon |
+| `rtk llm-proxy status` | Check proxy health and reachability |
+| `rtk llm-proxy stats` | Print real-time proxy traffic and savings stats |
+| `rtk llm-proxy config` | Get or set runtime proxy settings |
+| `rtk llm-proxy service` | Manage proxy background service |
 
-### Telemetry
+### Hooks & Internal
 
 | Subcommand | Description |
 |---|---|
-| `rtk telemetry` | Manage telemetry consent and data (RGPD/GDPR) |
-| `rtk learn [flags]` | Learn CLI corrections from agent error history |
+| `rtk rewrite <cmd>` | Check command rewrite without running it (single source of truth for hooks) |
+| `rtk hook <agent>` | Process agent hook payload from stdin (`claude`, `antigravity`, `cursor`, etc.) |
+| `rtk hook check` | Dry-run check for hook rewrite engine |
+| `rtk telemetry [cmd]` | Manage GDPR telemetry consent and settings |
+| `rtk config [cmd]` | View or modify global RTK configuration |
 
 ## Best Practices
 
-- Always check `which rtk` before assuming RTK is available. Degrade gracefully by running native commands when RTK is not present.
-- Use `rtk rewrite <command>` when you are unsure whether RTK has an equivalent. Exit code `1` means run the command unchanged.
-- Use `rtk bypass <command>` only when a filtered output was genuinely unusable — not as a default.
-- Run `rtk gain` after completing a task involving many commands if savings reporting is relevant to the conversation.
-- Run `rtk discover` when you suspect commands ran outside RTK's hook during a session.
-- Never re-run `rtk init` if the hooks are already active. Use `rtk verify` to confirm hook integrity.
+- Check availability first with `which rtk` or `rtk --version`.
+- Wrap shell commands with the appropriate `rtk <subcommand>` when working in environments without transparent argument rewriting (e.g. Antigravity, Cline).
+- Query `rtk rewrite <command>` when uncertain whether RTK provides a specialized filter. If exit code is `1`, run the native command unchanged.
+- Reserve `rtk bypass <command>` strictly for instances where filtered output was empty, garbled, or contradicted the process exit code.
+- Leverage `rtk recall <hash>` using hashes printed in RTK truncation notices to recover specific elided output without re-executing.
+- Use `rtk pipeline show` and `rtk pipeline validate` when configuring or modifying `pipeline.toml`.
+- Run `rtk gain` periodically or at task completion to measure token reduction impact.
