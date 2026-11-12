@@ -360,6 +360,43 @@
       "mustAvoid": [
         "Move rebuild_report into app/__init__.py"
       ]
+    },
+    {
+      "id": "mcp-server-integration",
+      "covers": [
+        "mcp-server-integration"
+      ],
+      "prompt": "My Equipment 1.4.0 project has mcpserver.py. Add an MCP tool that invokes a reports service and test it.",
+      "expectedAnswerGuidance": "Answer must recognize the optional FastMCP template integration, keep tool handlers typed and thin, delegate business logic to an App service, configure MCP in config/mcp.yaml, test with FastMCP's in-memory client and unittest, and restore shared-container overrides.",
+      "mustInclude": [
+        "FastMCP",
+        "mcpserver.py",
+        "config/mcp.yaml",
+        "in-memory",
+        "unittest"
+      ],
+      "mustAvoid": [
+        "pytest",
+        "subprocess or network"
+      ]
+    },
+    {
+      "id": "mcp-transport-safety",
+      "covers": [
+        "mcp-transport-safety"
+      ],
+      "prompt": "I want to expose Equipment's MCP server to remote clients over HTTP. What should I check?",
+      "expectedAnswerGuidance": "Answer must explain that stdio reserves stdout for protocol messages, HTTP MCP has no authentication by default, and generated host_origin_protection='auto' only validates loopback requests. Recommend authentication and private-network or gateway controls for remote access.",
+      "mustInclude": [
+        "stdout",
+        "authentication",
+        "host_origin_protection='auto'",
+        "private network"
+      ],
+      "mustAvoid": [
+        "print() in stdio handlers",
+        "expose an unauthenticated server publicly"
+      ]
     }
   ]
 }

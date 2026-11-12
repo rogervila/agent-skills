@@ -1,7 +1,7 @@
 ---
 name: "Project Setup And Structure"
 description: "How to install Equipment, create and configure a generated project, understand its files and entry points, and decide where new code goes."
-tags: [equipment, installation, equipment-new, project-structure, entry-points, main.py, web.py, queues.py, scheduler.py, virtualenv, pip, pyproject, env-file, first-run]
+tags: [equipment, installation, equipment-new, project-structure, entry-points, main.py, web.py, mcpserver.py, fastmcp, queues.py, scheduler.py, virtualenv, pip, pyproject, env-file, first-run]
 ---
 
 # Project Setup And Structure
@@ -15,6 +15,7 @@ Equipment is a scaffolding framework. `equipment new NAME` creates a normal Pyth
 - `pip` for the interpreter you will use.
 - Network access to GitHub when running `equipment new`.
 - Optional services, depending on configuration: Redis, S3-compatible storage, MySQL, or PostgreSQL.
+- Generated projects include an optional FastMCP server; remove it and its dependency if unused.
 
 ## Install The CLI
 
@@ -116,6 +117,7 @@ my-app/
 │   ├── database.yaml        # sqlite, mysql, postgresql connections
 │   ├── inspiring.json       # example data for Inspire
 │   ├── log.yaml             # level, channel, channels, formatters
+│   ├── mcp.yaml             # MCP transport, host, port, path
 │   ├── queue.yaml           # sync or redis
 │   ├── storage.yaml         # local or s3
 │   └── web.yaml             # host and port for web.py
@@ -128,11 +130,12 @@ my-app/
 ├── tests/
 │   ├── __init__.py
 │   ├── TestCase.py          # unittest base class with Faker and the app container
+│   ├── test_mcpserver.py
 │   └── app/
 │       ├── __init__.py
 │       └── test_Inspire.py
 ├── .coveragerc  .editorconfig  .env  .env.example  .gitignore
-├── main.py  queues.py  scheduler.py  web.py
+├── main.py  queues.py  scheduler.py  web.py  mcpserver.py
 ├── pyproject.toml           # name replaced with your project name
 └── README.md
 ```
@@ -144,10 +147,11 @@ my-app/
 | `app/__init__.py` | You | Service registrations; the composition root. |
 | `app/*.py`, `app/<domain>/` | You | Business services, repositories, jobs, routes. |
 | `config/*.yaml`, `config/*.json`, `config/*.ini` | You | Settings; each file usually holds one top-level key named after the file. |
+| `config/mcp.yaml` | You | Transport, host, port, and path used by `mcpserver.py`. |
 | `database/migrations/` | You | Alembic environment and revisions. |
 | `storage/app/`, `storage/logs/` | Runtime | Local files and logs; not committed. |
 | `tests/` | You | `unittest` tests. |
-| `main.py`, `web.py`, `queues.py`, `scheduler.py` | You | Process entry points. |
+| `main.py`, `web.py`, `mcpserver.py`, `queues.py`, `scheduler.py` | You | Process entry points. |
 | `.env.example` | You | Documented variable template; keep values fake. |
 | `.env` | Local runtime | Local overrides and secrets; git-ignored. |
 | `equipment` package | Framework | Installed library. Do not edit it in `site-packages`. |
@@ -160,6 +164,7 @@ my-app/
 | `scheduler.py` | `app = app()`, logs, then `app.scheduler().run()` (blocking loop). | Whatever the jobs need. |
 | `queues.py` | Builds `Redis(host, port, db)` from `config/queue.yaml` and runs `rq.Worker(['default']).work()`. | Redis. Ignores `REDIS_USERNAME`, `REDIS_PASSWORD`, and scheduled jobs; see `references/queue.md`. |
 | `web.py` | Creates `FastAPI(title=app.config.app.name())`, one `/` route, and runs Uvicorn with `config/web.yaml` host and port. | `fastapi[standard]`, `uvicorn[standard]`. |
+| `mcpserver.py` | Exposes app services as MCP tools, resources, and prompts through FastMCP. | `fastmcp`; `config/mcp.yaml`. |
 
 Every entry point rebinds the module-level name `app` to the container (`app = app()`). Inside those files, `app` is the container, not the factory function.
 
@@ -216,6 +221,7 @@ Write every new module fully type-annotated and check it with mypy; see `referen
 | Feature not needed | Remove |
 |---|---|
 | Web | `web.py`, `config/web.yaml`, and the `fastapi[standard]` and `uvicorn[standard]` dependencies. |
+| MCP | `mcpserver.py`, `config/mcp.yaml`, `tests/test_mcpserver.py`, and the `fastmcp` dependency. |
 | Redis workers | `queues.py`; keep `config/queue.yaml` with `sync`, because the container builds `queue` from it. |
 | Recurring jobs | `scheduler.py`, `app/Scheduler.py`, and the `scheduler` registration in `app/__init__.py`. |
 | Relational schema | `database/migrations/` and the `alembic` dependency; keep `config/database.yaml` unless you never call `app.database()`. |
@@ -228,6 +234,7 @@ Write every new module fully type-annotated and check it with mypy; see `referen
 - Fix the generated `.env` before first use: `APP_ENV=local`, `DB_CONNECTION=sqlite`, `DB_DATABASE=database/database.sqlite`.
 - Use one virtual environment per Equipment project, and prefer `python -m pip install -e ".[dev]"` during development.
 - Run every entry point and test command from the project root, or pass an explicit base path to `app()`.
+- Run MCP over `stdio` for local clients; protect HTTP transport with a private network, gateway, or FastMCP authentication.
 - Keep the virtual environment outside the project if you plan to use `equipment compile`.
 - Remove unused optional features completely: code, config, dependencies, tests, and docs together.
 - Read the generated files instead of assuming they match docs examples, because `equipment new` always uses the latest template.

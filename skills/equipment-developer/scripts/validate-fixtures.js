@@ -30,6 +30,7 @@ const requiredReferences = [
   "storage.md",
   "testing.md",
   "fastapi.md",
+  "mcp.md",
   "deployment.md",
   "maintaining-equipment.md",
   "typing.md",
@@ -60,6 +61,8 @@ const requiredCoverage = [
   "deployment-process-model",
   "typed-code",
   "job-import-cycle",
+  "mcp-server-integration",
+  "mcp-transport-safety",
 ];
 
 const requiredLinks = [
@@ -79,6 +82,7 @@ const requiredLinks = [
   "https://equipment-python.vercel.app/docs/features/tests",
   "https://equipment-python.vercel.app/docs/features/compilation",
   "https://equipment-python.vercel.app/docs/examples/fastapi",
+  "https://equipment-python.vercel.app/docs/examples/mcp",
   "https://equipment-python.vercel.app/docs/reference/cli",
   "https://equipment-python.vercel.app/docs/reference/environment-variables",
   "https://equipment-python.vercel.app/docs/reference/maintenance",
@@ -112,7 +116,9 @@ const requiredSkillTerms = [
   "REDIS_PASSWORD",
   ".required()",
   "references/verified-behavior.md",
+  "references/mcp.md",
   "references/typing.md",
+  "FastMCP",
   "scripts/equipment_doctor.py",
   "scripts/check_code_examples.py",
   "AbstractStorage",

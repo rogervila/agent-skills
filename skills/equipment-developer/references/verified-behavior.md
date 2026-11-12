@@ -132,6 +132,21 @@ Evidence types: **Run** means reproduced by executing code; **Source** means rea
 |---|---|---|---|
 | `pip install .` installs the project. | Also installs top-level packages `app`, `config`, `database`, `storage`, `tests` into `site-packages`; imports from other directories get a stale copy, and projects in one venv collide. | One venv per project; `pip install -e .` during development. | Run |
 
+## Equipment 1.4.0 MCP Template
+
+These are source-checked against the `1.4.0` release tag and current hosted documentation on 2026-11-12. They were not locally run against an MCP client or an HTTP deployment.
+
+| Behavior | Guidance | Evidence |
+|---|---|---|
+| MCP support is generated-project code, not an Equipment package service. | Use `mcpserver.py`, `config/mcp.yaml`, and FastMCP; remove them and `fastmcp` if unused. | Source (tag `1.4.0`), docs |
+| The template declares `fastmcp>=4.1.7,<5`. | Pin the exact FastMCP version tested for production; it may ship breaking minor releases. | Source (tag `1.4.0`), docs |
+| Default transport is `stdio`; HTTP uses `config/mcp.yaml` and defaults to `127.0.0.1:8001/mcp`. | Start local MCP servers from the project root and use the project's installed interpreter. | Source (tag `1.4.0`), docs |
+| `stdio` uses stdout for protocol messages. | Do not print or otherwise write diagnostics to stdout; use Equipment logging or stderr. | Docs |
+| The generated server uses `mask_error_details=True`. | Raise FastMCP `ToolError` only when a safe explanation should be visible to the model; ordinary exception details are masked from clients. | Source (tag `1.4.0`), docs |
+| HTTP transport has no authentication by default. | Keep remote access private or behind a gateway, or configure FastMCP authentication. The generated `host_origin_protection='auto'` only validates requests that reach the server through loopback. | Source (tag `1.4.0`), docs |
+| A project root module named `mcp.py` shadows the MCP SDK. | Keep the entry point named `mcpserver.py`; rename conflicting modules or directories. | Docs |
+| Generated MCP tests use FastMCP's in-memory client. | Test tools without a subprocess or network; restore provider overrides because tests share the cached app container. | Source (tag `1.4.0`), docs |
+
 ## Best Practices
 
 - Check this list before copying a docs example into a project.

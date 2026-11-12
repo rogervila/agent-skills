@@ -1,7 +1,7 @@
 ---
 name: "CLI And Compilation"
 description: "Exact behavior of the equipment new and equipment compile commands, including overwrite semantics, exit codes, compiled output contents, and safe compile workflows."
-tags: [equipment, cli, click, equipment-new, equipment-compile, bytecode, pyc, py_compile, dist, template, exit-code, overwrite]
+tags: [equipment, cli, click, equipment-new, equipment-compile, bytecode, pyc, py_compile, dist, template, mcpserver.py, exit-code, overwrite]
 ---
 
 # CLI And Compilation
@@ -10,7 +10,7 @@ Equipment installs one console script, `equipment`, built with Click. It has two
 
 ```bash
 equipment --help
-equipment --version          # e.g. "equipment, version 1.3.0"
+equipment --version          # e.g. "equipment, version 1.4.0"
 python -m equipment --help   # same CLI through the module entry point
 ```
 
@@ -111,6 +111,7 @@ Verified on a generated project:
 - `database/` is copied, including any local `*.sqlite` file.
 - Stale files in `DIST` are not removed.
 - Third-party dependencies are not bundled. The target needs `python -m pip install .` (or equivalent) with a compatible interpreter.
+- The generated `mcpserver.py` is compiled like other entry points; run it from the compiled project root with `python mcpserver.pyc`. The target still needs FastMCP installed.
 
 ### Safe Compile Workflow
 
@@ -145,4 +146,5 @@ If the virtual environment must live in the project, compile from a clean copy (
 - Delete `dist` and `build` before compiling, and keep virtual environments out of the project tree.
 - Review `dist/.env`, `dist/storage/`, and `dist/database/` before shipping compiled output.
 - Smoke test with `cd dist && python main.pyc` using the target Python version.
+- Smoke test `python mcpserver.pyc` from the compiled project root when shipping MCP.
 - Use `python -m equipment ...` when the console script is not on `PATH`.

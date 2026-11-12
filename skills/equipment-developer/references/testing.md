@@ -1,7 +1,7 @@
 ---
 name: "Testing Equipment Projects"
 description: "Correct unittest and coverage commands for generated projects, the shared-container isolation problem and its fixes, and test patterns for services, config, storage, queues, schedulers, and routes."
-tags: [equipment, testing, unittest, TestCase, discover, coverage, coveragerc, faker, mock, override, enterContext, reset_singletons, NullLogger, isolation, fastapi, TestClient]
+tags: [equipment, testing, unittest, TestCase, discover, coverage, coveragerc, faker, mock, override, enterContext, reset_singletons, NullLogger, isolation, fastapi, TestClient, mcp, fastmcp]
 ---
 
 # Testing Equipment Projects
@@ -212,6 +212,17 @@ self.addCleanup(self.app.reports.reset)
 | Scheduler | Fresh instance, `should_exit = True`, patch `equipment.Scheduler.Scheduler.sleep`. | `references/scheduler.md` |
 | Logging | `NullLogger` override; `Mock` logger to assert calls. | `references/logging.md` |
 | HTTP | FastAPI `TestClient`. | `references/fastapi.md` |
+| MCP | FastMCP in-memory `Client`; no subprocess or network required. Restore provider overrides because tests share the cached container. | `references/mcp.md` |
+
+### MCP Server Tests
+
+The generated `tests/test_mcpserver.py` uses FastMCP's in-memory client to list and call tools, read resources, and render prompts. Run it with:
+
+```bash
+python -m unittest tests.test_mcpserver
+```
+
+The generated test class skips when `fastmcp` is not installed. Keep FastMCP installed when MCP behavior must be covered; otherwise the suite can pass without running those tests. Provider overrides affect the same cached `App` container as application tests, so always restore them with `addCleanup()` or a context manager.
 
 ## Test Philosophy
 
@@ -240,4 +251,5 @@ self.addCleanup(self.app.reports.reset)
 - Override providers and config before creating the services that depend on them.
 - Keep tests fast, deterministic, offline, and free of sleeps.
 - Prefer direct construction with fakes for unit tests and the container for workflow tests.
+- Use the FastMCP in-memory client for MCP protocol behavior; test business services directly.
 - Annotate test methods with `-> None`, declare `app: App` on the base class, and use `create_autospec(Interface, instance=True)` for framework mocks.

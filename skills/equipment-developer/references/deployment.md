@@ -1,7 +1,7 @@
 ---
 name: "Deployment And Operations"
 description: "Process model, per-process environment profiles, driver choices, working-directory requirements, and pre-release checks for running Equipment applications in production."
-tags: [equipment, deployment, operations, production, process-model, worker, scheduler, web, environment, docker, paas, smoke-test, compile, s3, redis, postgresql]
+tags: [equipment, deployment, operations, production, process-model, worker, scheduler, web, mcp, fastmcp, environment, docker, paas, smoke-test, compile, s3, redis, postgresql]
 ---
 
 # Deployment And Operations
@@ -17,6 +17,7 @@ An Equipment app can run up to four kinds of process from the same code:
 | Web | `python web.py` or `uvicorn web:web --host ... --port ...` | Any | Stateless if storage, queue, and database are shared services. |
 | Worker | `python queues.py` | Any | Needs Redis; add `with_scheduler=True` for `push_at` jobs; see `references/queue.md`. |
 | Scheduler | `python scheduler.py` | Exactly one, unless jobs are idempotent or locked | Stops on the first unhandled job exception; supervise and restart it. |
+| MCP | Client launches `python mcpserver.py` (`stdio`), or run it as an HTTP service. | As needed | `stdio` is local; HTTP has no authentication by default. See `references/mcp.md`. |
 | One-off script | `python main.py` or your own script | As needed | Same config rules as the others. |
 
 Every process calls `app()` and reads config from the working directory. Start every process with the project root as the working directory (for example a container `WORKDIR`), or pass an explicit base path to `app()` in your entry points.
@@ -63,6 +64,7 @@ Operational rules:
 - Percent-encode special characters in `DB_PASSWORD`; see `references/database.md`.
 - Pass Redis credentials explicitly; the stock Redis code ignores `REDIS_USERNAME` and `REDIS_PASSWORD`.
 - Create log directories before start if you use file channels.
+- Keep HTTP MCP behind a private network or gateway, or configure FastMCP authentication. The generated loopback Host/Origin protection does not apply to requests arriving through other interfaces.
 
 ## Installing On The Target
 
@@ -113,6 +115,7 @@ Then confirm that Redis, the database, and S3 are reachable from the target envi
 ## Best Practices
 
 - Run web, worker, and scheduler as separate processes from the same code version.
+- Use `stdio` for local MCP clients; deploy HTTP MCP only with authentication and network controls.
 - Start every process from the project root.
 - Use shared services in production: a server database, Redis, S3, and console logs.
 - Keep exactly one scheduler unless jobs are idempotent or locked.

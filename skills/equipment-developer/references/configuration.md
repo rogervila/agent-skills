@@ -1,7 +1,7 @@
 ---
 name: "Configuration And Environment Variables"
 description: "How Equipment loads .env and config files, interpolates ${VAR:default} values, types them per file format, merges files, and which environment variables the generated project uses."
-tags: [equipment, configuration, config, dotenv, env, yaml, json, ini, interpolation, environment-variables, base_path, Configuration, from_value, override, secrets, profiles]
+tags: [equipment, configuration, config, dotenv, env, yaml, json, ini, interpolation, environment-variables, base_path, Configuration, from_value, override, secrets, profiles, mcp, fastmcp]
 ---
 
 # Configuration And Environment Variables
@@ -112,6 +112,7 @@ Add a new file per service instead of growing `config/app.yaml`. Keep `.env.exam
 | `config/queue.yaml` | `queue` | `connection`, `connections.sync`, `connections.redis` |
 | `config/storage.yaml` | `storage` | `disk`, `disks.local.path`, `disks.s3.*` |
 | `config/web.yaml` | `web` | `host`, `port` |
+| `config/mcp.yaml` | `mcp` | `transport`, `host`, `port`, `path` |
 | `config/inspiring.json` | `inspiring` | `quotes` (example data) |
 
 > The local storage key is `path`, not `root`.
@@ -146,8 +147,14 @@ Add a new file per service instead of growing `config/app.yaml`. Keep `.env.exam
 | `S3_PREFIX` | `null` | not set | S3 storage key prefix |
 | `WEB_HOST` | `0.0.0.0` | not set | `config/web.yaml` |
 | `PORT` | `8000` | not set | `config/web.yaml` |
+| `MCP_TRANSPORT` | `stdio` | not set | `config/mcp.yaml`; `stdio` or `http` |
+| `MCP_HOST` | `127.0.0.1` | not set | MCP HTTP bind host |
+| `MCP_PORT` | `8001` | not set | MCP HTTP port |
+| `MCP_PATH` | `/mcp` | not set | MCP HTTP endpoint path |
 
 See `references/project-setup.md` for the recommended local `.env`.
+
+FastMCP also reads its own `FASTMCP_*` environment variables. Keep stdout reserved for MCP messages when using `stdio`; see `references/mcp.md`.
 
 ## Environment Profiles
 

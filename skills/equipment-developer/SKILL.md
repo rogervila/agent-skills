@@ -1,12 +1,12 @@
 ---
 name: equipment-developer
-description: Specialist guidance for building, testing, debugging, and maintaining Python applications scaffolded with Equipment (rogervila/equipment), covering the equipment new and compile CLI, the dependency-injector App container, .env and config interpolation, SQLAlchemy and Alembic, logging channels, sync and Redis queues, the scheduler, local and S3 storage, unittest testing, FastAPI entry points, fully typed code checked with mypy, and source-verified pitfalls.
+description: Specialist guidance for building, testing, debugging, and maintaining Equipment applications, including FastMCP MCP servers, FastAPI, configuration, SQLAlchemy, queues, storage, unittest, and verified pitfalls.
 license: MIT
 metadata:
   author: "Roger Vilà"
   repository: "https://github.com/rogervila/agent-skills"
-  version: "1.0.0"
-  keywords: "equipment, python, scaffolding, dependency-injector, dependency-injection, configuration, dotenv, yaml, sqlalchemy, alembic, logging, queue, redis, rq, scheduler, schedule, storage, s3, boto3, unittest, fastapi, uvicorn, bytecode, cli, typing, type-hints, mypy"
+  version: "1.1.0"
+  keywords: "equipment, python, scaffolding, dependency-injector, dependency-injection, configuration, dotenv, yaml, sqlalchemy, alembic, logging, queue, redis, rq, scheduler, schedule, storage, s3, boto3, unittest, fastapi, uvicorn, mcp, fastmcp, model-context-protocol, bytecode, cli, typing, type-hints, mypy"
 ---
 
 # Equipment Developer
@@ -25,6 +25,7 @@ Use this skill when:
 
 - The project contains `app/__init__.py` with `class App(Equipment)` or `from equipment import Equipment`, `config/*.yaml` files with `${VAR:default}` placeholders, or the entry points `main.py`, `web.py`, `queues.py`, and `scheduler.py`.
 - `equipment` appears in the project dependencies, or the user mentions `equipment new`, `equipment compile`, `equipment-python.vercel.app`, or `rogervila/equipment`.
+- The project contains `mcpserver.py` or `config/mcp.yaml`, or the user mentions Equipment's FastMCP or MCP server.
 - The task touches the Equipment container, configuration, database, logging, queue, scheduler, storage, tests, compilation, or the generated FastAPI entry point.
 - The task changes the Equipment repository itself: the `equipment/` package, the `project/` template, its tests, or its `website/` docs.
 
@@ -48,9 +49,9 @@ Before changing code, establish:
 
 1. Classify the request: Equipment app, Equipment repository, not Equipment, or ambiguous.
 2. Inspect the project files listed above. Optionally run `python scripts/equipment_doctor.py <project-root>` from this skill; it is read-only.
-3. Check current docs (`llms-full.txt` or a single `.md` page) before citing volatile details.
+3. Check current docs (`llms-full.txt` or a single `.md` page) before citing volatile details. For MCP work, read `references/mcp.md`.
 4. Implement with Equipment conventions: services in `app/`, registrations in `app/__init__.py`, one config file per service, constructor injection, module-level queue tasks, and full type annotations.
-5. Add or update `unittest` tests that use the generated `TestCase` and undo every override.
+5. Add or update `unittest` tests that use the generated `TestCase` and undo every override. MCP tests can use FastMCP's in-memory client.
 6. Verify from the project root: `python -m unittest`, the strict mypy check on every file you wrote, plus the relevant entry point, migration, or compile smoke test.
 7. Report changes, verification, and any doc gap or pitfall that affected the work.
 
@@ -61,6 +62,7 @@ Before changing code, establish:
 | LLM index with constraints | https://equipment-python.vercel.app/llms.txt |
 | Full docs bundle | https://equipment-python.vercel.app/llms-full.txt |
 | Docs website | https://equipment-python.vercel.app/docs/intro |
+| MCP example | https://equipment-python.vercel.app/docs/examples/mcp |
 | Single page as Markdown | Append `.md`, for example https://equipment-python.vercel.app/docs/features/queue.md |
 | Source and issues | https://github.com/rogervila/equipment |
 | Releases | https://pypi.org/project/equipment/ |
@@ -74,6 +76,7 @@ See `references/official-documentation.md` for every page and the source-of-trut
 - `App` in `app/__init__.py` is the composition root. Register services there with constructor injection.
 - Drivers are chosen by configuration: `sync` or `redis` queues, `local` or `s3` storage, `sqlite`, `mysql`, or `postgresql` databases, and `stack`, `single`, `daily`, `console`, `sqlite`, or `null` log channels.
 - Equipment does not replace FastAPI, SQLAlchemy, Alembic, RQ, `schedule`, boto3, or `unittest`. Use those libraries directly inside services when you need more.
+- The generated `mcpserver.py` is an optional FastMCP layer over the app container, not a feature of the installed Equipment package. It exposes tools, resources, and prompts to MCP clients.
 
 ## Core Pattern
 
@@ -165,11 +168,13 @@ class ReportsTest(TestCase):
 | Worker | `python queues.py` (Redis; use `w.work(with_scheduler=True)` for `push_at`) |
 | Scheduler | `python scheduler.py` (one replica) |
 | Web | `python web.py` or `uvicorn web:web --host 127.0.0.1 --port 8000` |
+| MCP tests | `python -m unittest tests.test_mcpserver` |
+| MCP server listing | `fastmcp list mcpserver.py --resources --prompts` |
 | Compile | `python -m equipment compile dist`, then `cd dist` and `python main.pyc` |
 
 ## Critical Pitfalls
 
-Verified on 2026-11-01 with `equipment` 1.3.0. Details and evidence: `references/verified-behavior.md`.
+Existing runtime pitfalls were verified on 2026-11-01 with `equipment` 1.3.0. The 1.4.0 release adds a generated FastMCP server; see `references/mcp.md` and `references/verified-behavior.md`.
 
 | Pitfall | Do this |
 |---|---|
@@ -191,12 +196,16 @@ Verified on 2026-11-01 with `equipment` 1.3.0. Details and evidence: `references
 | A module imported by `app/__init__.py` (for example a job module used by `app/Scheduler.py`) that does a top-level `from app import app` raises a circular `ImportError`. | Import `app` inside the task function. |
 | The template's `todos` example uses a `BIGINT` primary key, which SQLite does not auto-increment: `NOT NULL constraint failed: todos.id`. | `BigInteger().with_variant(Integer, "sqlite")` in models and migrations. |
 | Plain `mypy` fails: root `__init__.py` and no `py.typed` in `equipment`. | `--explicit-package-bases --follow-untyped-imports`; narrow `# type: ignore[arg-type]` on `App.make`. |
+| `mcp.py` in the project root shadows the MCP SDK. | Keep the generated entry point named `mcpserver.py`; rename conflicting project modules or directories. |
+| `print()` or other stdout writes corrupt MCP `stdio` transport. | Keep stdout protocol-only; log with `app.log()` or write diagnostics to stderr. |
+| MCP tools are reachable over HTTP without authentication by default. | Keep remote access behind a private network or gateway, or configure FastMCP authentication. |
 
 ## Response Requirements
 
 - Start from the Equipment model: composition root, config file, driver, process, and test.
 - Read the user's actual files before proposing changes; do not assume they match docs examples.
 - Fully type-annotate every function, method, and test you write, including `-> None`. Annotate framework services with `AbstractLogger`, `AbstractQueue`, `AbstractStorage`, and `SQLAlchemyFactory`, and keep annotations true at runtime. Follow `references/typing.md`.
+- Keep MCP tool handlers typed and thin; put business logic in registered services. Raise FastMCP `ToolError` only for safe, model-visible failure messages.
 - Use `unittest` and the generated `TestCase`. Never introduce pytest unless the project already uses it.
 - Register services in `app/__init__.py` with constructor injection; call `app()` only at process boundaries such as entry points, queue tasks, and router modules.
 - Put new settings in `config/<name>.yaml` with a matching top-level key, update `.env.example` with fake values, and quote string placeholders.
@@ -216,6 +225,9 @@ Verified on 2026-11-01 with `equipment` 1.3.0. Details and evidence: `references
 - Do not use `self.config` in schedulers, or the module-level `schedule.every()`; use injected values and `self.schedule`.
 - Do not pass raw user input as storage paths or format values into SQL; use generated paths and bind parameters.
 - Do not set `log.channels.console.stream` to a string, or invent log levels.
+- Do not write to stdout from an MCP server using `stdio`; stdout carries protocol messages.
+- Do not expose an unauthenticated HTTP MCP server to untrusted networks.
+- Do not name a project module `mcp.py`; it shadows the SDK used by FastMCP.
 - Do not leave provider overrides, `from_value()` changes, or root `config.override({...})` in tests.
 - Do not run `equipment new` inside an existing project, or ship compiled output without reviewing `.env`, `storage/`, and `database/`.
 - When contributing to the Equipment repository, do not add top-level imports of heavy dependencies or mix dependency upgrades with other changes.
@@ -238,6 +250,7 @@ The task is complete when:
 - Configuration changes are reflected in `.env.example` with fake values, and placeholders that must stay strings are quoted.
 - Database changes include a reviewed Alembic migration, or a stated reason why none is needed.
 - The relevant runtime path was exercised: `python main.py`, a route through `TestClient`, a sync-queue task, a scheduler registration test, `alembic upgrade head`, or `cd dist && python main.pyc`.
+- For MCP changes, run `python -m unittest tests.test_mcpserver`; protect `stdio` stdout and secure HTTP deployments.
 - Checks that need unavailable services (Redis, S3, MySQL, PostgreSQL, Windows) are listed as not run.
 
 ## Failure And Escalation Behavior
@@ -274,6 +287,7 @@ When finishing an Equipment task, include:
 - `references/storage.md` - storage API, local versus S3 differences, path safety, encoding, testing.
 - `references/testing.md` - correct `unittest` and coverage commands, shared-container isolation, test patterns.
 - `references/fastapi.md` - `web.py`, routers, thin routes, sessions per request, `TestClient`.
+- `references/mcp.md` - FastMCP tools, resources, prompts, transports, testing, FastAPI mounting, and deployment safety.
 - `references/deployment.md` - process model, production drivers, environment profiles, release checks.
 - `references/maintaining-equipment.md` - contributing to the Equipment repository: rules, lazy imports, validation, checklists.
 - `references/typing.md` - annotation rules, types for framework services, typed models, and verified mypy setup.

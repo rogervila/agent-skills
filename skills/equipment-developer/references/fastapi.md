@@ -1,7 +1,7 @@
 ---
 name: "FastAPI Entry Point"
 description: "How the generated web.py combines FastAPI and Uvicorn with the Equipment container, and how to add routers, keep routes thin, manage sessions, test routes, and run the server."
-tags: [equipment, fastapi, uvicorn, web.py, web.yaml, router, APIRouter, TestClient, routes, WEB_HOST, PORT, http]
+tags: [equipment, fastapi, uvicorn, web.py, web.yaml, router, APIRouter, TestClient, routes, WEB_HOST, PORT, http, mcp, fastmcp]
 ---
 
 # FastAPI Entry Point
@@ -200,6 +200,10 @@ Mounting the router on a fresh `FastAPI()` keeps the test independent of `web.py
 
 Test service behavior directly without HTTP; keep HTTP tests for routing, status codes, and serialization.
 
+## Mount MCP On The Same Server
+
+Equipment 1.4.0 also generates `mcpserver.py` with FastMCP. To serve MCP and FastAPI from one process and port, mount the FastMCP HTTP app in `web.py` and use its lifespan so MCP sessions initialize. Combine lifespans if `web.py` already has one. See `references/mcp.md` and the [official MCP example](https://equipment-python.vercel.app/docs/examples/mcp) for the complete pattern.
+
 ## Per-Environment Settings
 
 ```env
@@ -245,4 +249,5 @@ QUEUE_CONNECTION=redis
 - Manage database sessions per request with dependencies.
 - Test HTTP behavior with `TestClient` and service behavior directly.
 - Keep host, port, and secrets in configuration and environment variables.
+- Protect mounted MCP endpoints with authentication and network controls; the HTTP MCP server is unauthenticated by default.
 - Type handlers and dependencies (`Annotated[Session, Depends(...)]`), and use `application = app()` instead of rebinding `app`.

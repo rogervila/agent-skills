@@ -21,7 +21,7 @@
     },
     {
       "name": "equipment-developer",
-      "description": "Specialist guidance for building, testing, debugging, and maintaining Python applications scaffolded with Equipment (rogervila/equipment), covering the equipment new and compile CLI, the dependency-injector App container, .env and config interpolation, SQLAlchemy and Alembic, logging channels, sync and Redis queues, the scheduler, local and S3 storage, unittest testing, FastAPI entry points, fully typed code checked with mypy, and source-verified pitfalls.",
+      "description": "Specialist guidance for building, testing, debugging, and maintaining Equipment applications, including FastMCP MCP servers, FastAPI, configuration, SQLAlchemy, queues, storage, unittest, and verified pitfalls.",
       "files": [
         "SKILL.md",
         "assets/behavior-fixtures.json",
@@ -33,6 +33,7 @@
         "references/fastapi.md",
         "references/logging.md",
         "references/maintaining-equipment.md",
+        "references/mcp.md",
         "references/official-documentation.md",
         "references/project-setup.md",
         "references/queue.md",
