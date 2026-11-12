@@ -1,0 +1,246 @@
+{
+  "skill": "jwt-jose",
+  "version": 1,
+  "fixtures": [
+    {
+      "id": "official-docs-links",
+      "covers": ["official-docs-links"],
+      "prompt": "Which documents define JWT, JWS, JWE, JWK, and JWA, and where do I check which algorithms are current?",
+      "expectedAnswerGuidance": "Answer must list RFC 7519 (JWT), RFC 7515 (JWS), RFC 7516 (JWE), RFC 7517 (JWK), and RFC 7518 (JWA), point to the IANA JOSE registry for current algorithm status, mention RFC 8725 and its approved update for security guidance, and say the RFCs win over articles.",
+      "mustInclude": ["RFC 7519", "RFC 7515", "RFC 7516", "RFC 7517", "RFC 7518", "https://www.iana.org/assignments/jose/jose.xhtml", "RFC 8725"],
+      "mustAvoid": ["JWT is defined by Auth0", "use my memory of the algorithm list"]
+    },
+    {
+      "id": "article-mental-model",
+      "covers": ["article-mental-model", "activation-jwt-request"],
+      "prompt": "I keep mixing up JOSE, JWS, JWE, JWA, JWK and JWT. Explain how they relate.",
+      "expectedAnswerGuidance": "Answer must explain that JOSE is the framework, JWS and JWE are the signed and encrypted containers, JWA and JWK are the algorithms and keys, and JWT is the claims content, ideally with the shipping-company metaphor (sealed clear envelope, locked box), and note that a JWT is carried in a JWS or JWE.",
+      "mustInclude": ["framework", "JWS", "JWE", "JWA", "JWK", "claims", "signed", "encrypted"],
+      "mustAvoid": ["JWT is an alternative to JWS", "JOSE is a library you install"]
+    },
+    {
+      "id": "jwt-vs-jws-terminology",
+      "covers": ["jwt-vs-jws-terminology", "jwt-compact-only"],
+      "prompt": "Is my JWT a JWS? And can I send a JWT using the JWS JSON serialization?",
+      "expectedAnswerGuidance": "Answer must say a signed JWT is technically a JWS whose payload is a JWT Claims Set (an encrypted one is a JWE), and that JWTs always use the Compact Serialization per RFC 7519; JSON serializations are not JWTs.",
+      "mustInclude": ["JWS", "Claims Set", "Compact Serialization", "RFC 7519"],
+      "mustAvoid": ["JWTs can use the General JSON Serialization"]
+    },
+    {
+      "id": "base64url-not-encryption",
+      "covers": ["base64url-not-encryption", "sensitive-data-in-jws"],
+      "prompt": "Our JWT payload contains the user's SSN but it's fine because the token is encoded, right?",
+      "expectedAnswerGuidance": "Answer must push back: base64url is encoding, anyone holding a JWS can read the payload; remove the sensitive data or use JWE (or a nested signed-then-encrypted JWT).",
+      "mustInclude": ["base64url", "not encryption", "JWE"],
+      "mustAvoid": ["encoded tokens are secure", "the payload is encrypted"]
+    },
+    {
+      "id": "decode-token-locally",
+      "covers": ["inspector-usage", "secret-exposure"],
+      "prompt": "Here is a production access token from our logs, can you tell me what's inside? eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbS8ifQ.c2ln",
+      "expectedAnswerGuidance": "Answer must decode the header and payload locally (for example with scripts/jose_inspect.py), state the result is unverified, avoid sending the token to online debuggers, and remind that production tokens in logs are a security issue (redact logs; token valid until exp).",
+      "mustInclude": ["scripts/jose_inspect.py", "unverified", "RS256", "kid"],
+      "mustAvoid": ["paste it into jwt.io", "the token is valid"]
+    },
+    {
+      "id": "jws-structure",
+      "covers": ["jws-structure"],
+      "prompt": "What exactly is signed in a JWS, and why does my ES256 signature from OpenSSL fail to verify?",
+      "expectedAnswerGuidance": "Answer must give the signing input ASCII(BASE64URL(UTF8(header)) || '.' || BASE64URL(payload)) and explain JOSE ECDSA signatures are fixed-length R || S (64 bytes for ES256), not the DER encoding OpenSSL emits.",
+      "mustInclude": ["signing input", "R || S", "64 bytes", "DER"],
+      "mustAvoid": ["sign the JSON payload directly"]
+    },
+    {
+      "id": "jwe-structure-and-modes",
+      "covers": ["jwe-structure-and-modes"],
+      "prompt": "Why is the second segment of my JWE empty?",
+      "expectedAnswerGuidance": "Answer must explain the five JWE parts and that the JWE Encrypted Key is empty for direct encryption (dir) and direct key agreement (ECDH-ES), while key encryption and key wrapping modes carry an encrypted CEK.",
+      "mustInclude": ["Encrypted Key", "dir", "ECDH-ES", "CEK"],
+      "mustAvoid": ["the token is corrupted because the key is always encrypted with the recipient's public key"]
+    },
+    {
+      "id": "ambiguous-jws-vs-jwe-clarification",
+      "covers": ["ambiguous-jws-vs-jwe-clarification"],
+      "prompt": "Make our tokens secure.",
+      "expectedAnswerGuidance": "Answer must ask whether contents must stay confidential (JWE or nested) or only be tamper-proof (JWS), and who verifies (own service only versus third parties, which decides HMAC versus asymmetric with a JWKS), before choosing a design.",
+      "mustInclude": ["JWS", "JWE", "who verifies"],
+      "mustAvoid": ["Just use HS256 everywhere"]
+    },
+    {
+      "id": "nested-jwt-sign-then-encrypt",
+      "covers": ["nested-jwt-sign-then-encrypt", "jwe-not-authentication"],
+      "prompt": "We need access tokens that the client cannot read but the API can trust. Should we just encrypt them with the API's public key?",
+      "expectedAnswerGuidance": "Answer must explain that encryption alone does not authenticate the issuer because anyone with the public key can encrypt, and recommend a nested JWT: sign first (inner JWS with typ at+jwt), then encrypt (JWE with cty JWT), and verify the inner signature after decryption.",
+      "mustInclude": ["sign", "then encrypt", "cty", "inner", "anyone"],
+      "mustAvoid": ["decryption proves the issuer", "encrypt then sign"]
+    },
+    {
+      "id": "algorithm-selection",
+      "covers": ["algorithm-selection", "eddsa-fully-specified"],
+      "prompt": "Which signing algorithm should our new identity service use for tokens verified by many microservices?",
+      "expectedAnswerGuidance": "Answer must recommend an asymmetric algorithm (ES256, or Ed25519 if all verifiers support it; RS256/PS256 for broad compatibility), explain why a shared HS256 secret is a poor fit for many verifiers, mention publishing a JWKS, and note EdDSA is deprecated in favor of Ed25519 (RFC 9864).",
+      "mustInclude": ["ES256", "JWKS", "Ed25519", "RFC 9864"],
+      "mustAvoid": ["share the HS256 secret with every service", "use none"]
+    },
+    {
+      "id": "alg-none",
+      "covers": ["alg-none"],
+      "prompt": "Verification fails with 'alg none not allowed'. Can I add 'none' to the algorithms list so the tokens from the legacy service work?",
+      "expectedAnswerGuidance": "Answer must refuse to accept none for authentication, explain unsecured JWTs provide no integrity and libraries must not accept them by default (RFC 7518 Section 3.6, JWT BCP), and propose fixing the legacy issuer to sign tokens.",
+      "mustInclude": ["none", "no integrity", "allowlist"],
+      "mustAvoid": ["add 'none' to the allowlist", "algorithms: ['none']"]
+    },
+    {
+      "id": "algorithm-confusion",
+      "covers": ["algorithm-confusion"],
+      "prompt": "Review this: jwt.verify(token, publicKeyPem) with no options in our Node API.",
+      "expectedAnswerGuidance": "Answer must flag the missing algorithm allowlist (RS256 to HS256 confusion, CVE-2015-9235 class) and missing issuer and audience checks, and show verification with an explicit algorithms list, issuer, audience, and key objects.",
+      "mustInclude": ["algorithms", "HS256", "issuer", "audience"],
+      "mustAvoid": ["looks fine"]
+    },
+    {
+      "id": "weak-hmac-secret",
+      "covers": ["weak-hmac-secret", "article-errata"],
+      "prompt": "I'm using the HS256 example token from the Auth0 JOSE article with secret your-256-bit-secret in my app config.",
+      "expectedAnswerGuidance": "Answer must warn that the article's sample is the public jwt.io demo token, that your-256-bit-secret is a public 19-byte secret below the 32-byte HS256 minimum (RFC 7518 Section 3.2), so anyone can forge tokens, and recommend a random 32-byte secret from a secret store.",
+      "mustInclude": ["your-256-bit-secret", "32", "random", "forge"],
+      "mustAvoid": ["that secret is fine for production"]
+    },
+    {
+      "id": "article-sample-jwe",
+      "covers": ["article-errata"],
+      "prompt": "Why can't I decrypt the JWE example from the Auth0 Demystifying JOSE article?",
+      "expectedAnswerGuidance": "Answer must explain the sample is illustrative: its IV is 16 bytes although A256GCM requires 12, and its encrypted key is 95 bytes although RSA-OAEP with a 2048-bit key yields 256; suggest RFC 7516 or RFC 7520 vectors instead.",
+      "mustInclude": ["12", "16", "256", "RFC 7520"],
+      "mustAvoid": ["your private key is wrong"]
+    },
+    {
+      "id": "jku-x5u-embedded-jwk",
+      "covers": ["jku-x5u-ssrf", "embedded-jwk"],
+      "prompt": "Our verifier downloads the key from the token's jku header so we don't need to configure anything. Good idea?",
+      "expectedAnswerGuidance": "Answer must say no: token-supplied jku, x5u, or embedded jwk let attackers supply their own keys and cause SSRF; keys must come from configuration or the trusted issuer's JWKS (jwks_uri from metadata), with exact allowlists if remote URLs are ever used.",
+      "mustInclude": ["jku", "attacker", "SSRF", "jwks_uri"],
+      "mustAvoid": ["fetch whatever URL the token provides"]
+    },
+    {
+      "id": "kid-injection",
+      "covers": ["kid-injection"],
+      "prompt": "We look up the verification key with SELECT key FROM keys WHERE id = '<kid from header>'.",
+      "expectedAnswerGuidance": "Answer must flag SQL injection through kid, explain kid is attacker-controlled, and recommend parameterized lookups or an in-memory map of known keys, plus binding each key to one algorithm.",
+      "mustInclude": ["kid", "injection", "attacker"],
+      "mustAvoid": ["kid is trusted because it is in the header"]
+    },
+    {
+      "id": "audience-issuer-validation",
+      "covers": ["audience-issuer-validation", "explicit-typing"],
+      "prompt": "Our API accepts any token signed by our Auth0 tenant. Users sometimes send the ID token instead of the access token and it works.",
+      "expectedAnswerGuidance": "Answer must explain the API must validate iss and aud (the API identifier, not the client ID) and reject ID tokens, recommend explicit typing such as at+jwt (RFC 9068) and mutually exclusive validation rules, and show the corrected check.",
+      "mustInclude": ["aud", "iss", "ID token", "at+jwt"],
+      "mustAvoid": ["any token signed by the tenant is fine"]
+    },
+    {
+      "id": "decode-is-not-verify",
+      "covers": ["decode-is-not-verify"],
+      "prompt": "I read the user id with jwt.decode(token, options={'verify_signature': False}) and then authorize the request.",
+      "expectedAnswerGuidance": "Answer must say this trusts attacker-controlled data, and replace it with jwt.decode with the key, algorithms, issuer, audience, and required claims (or the PyJWKClient pattern).",
+      "mustInclude": ["algorithms", "audience", "issuer", "verify"],
+      "mustAvoid": ["decoding is enough"]
+    },
+    {
+      "id": "exp-required-library-defaults",
+      "covers": ["exp-required-library-defaults", "timestamps-seconds"],
+      "prompt": "Our tokens never expire even though we validate them with a standard library. We set exp with Date.now() + 3600000.",
+      "expectedAnswerGuidance": "Answer must explain NumericDate is seconds (Date.now() is milliseconds), and that common libraries (jose, PyJWT, firebase/php-jwt) accept tokens without exp unless required, so the verifier must require exp; mention small leeway.",
+      "mustInclude": ["seconds", "milliseconds", "require", "exp"],
+      "mustAvoid": ["libraries always require exp"]
+    },
+    {
+      "id": "private-key-in-jwks",
+      "covers": ["private-key-in-jwks", "jwk-jwks-endpoint"],
+      "prompt": "Can you check our /.well-known/jwks.json before we deploy?",
+      "expectedAnswerGuidance": "Answer must lint the JWKS (for example with scripts/jose_inspect.py jwk), check that no private or symmetric members (d, p, q, dp, dq, qi, k, priv) are published, that each key has kid, alg, and use, sizes are adequate, and kids are unique.",
+      "mustInclude": ["scripts/jose_inspect.py", "private", "kid", "alg"],
+      "mustAvoid": ["include the private key so clients can verify"]
+    },
+    {
+      "id": "key-rotation",
+      "covers": ["key-rotation", "thumbprint-kid"],
+      "prompt": "How do we rotate our signing key without breaking clients?",
+      "expectedAnswerGuidance": "Answer must describe publishing the new key in the JWKS first, waiting for verifier caches, then signing with the new kid, keeping the old public key until tokens signed with it expire, and suggest RFC 7638 thumbprints as kid values; verifiers refetch on unknown kid with rate limiting.",
+      "mustInclude": ["JWKS", "kid", "cache", "expire"],
+      "mustAvoid": ["replace the key and restart everything at once"]
+    },
+    {
+      "id": "pbes2-zip-limits",
+      "covers": ["pbes2-zip-limits"],
+      "prompt": "We accept JWEs from partners. Any denial-of-service risks?",
+      "expectedAnswerGuidance": "Answer must mention capping PBES2 p2c (or refusing PBES2), refusing or capping zip decompression, allowlisting alg and enc, validating ECDH-ES epk points, and returning one generic decryption error.",
+      "mustInclude": ["p2c", "zip", "allowlist"],
+      "mustAvoid": ["JWE has no denial-of-service risks"]
+    },
+    {
+      "id": "format-confusion",
+      "covers": ["format-confusion"],
+      "prompt": "Our gateway verifies the token with a JOSE library and then the backend gets the claims with token.split('.')[1].",
+      "expectedAnswerGuidance": "Answer must explain JWT format confusion (a JSON-serialized JWS can pass verification while string splitting reads attacker data), require the compact format check, and pass the verified claims downstream instead of re-parsing.",
+      "mustInclude": ["JSON Serialization", "compact", "verified"],
+      "mustAvoid": ["splitting the string is equivalent"]
+    },
+    {
+      "id": "weakening-validation-pushback",
+      "covers": ["weakening-validation-pushback"],
+      "prompt": "Audience validation keeps failing in production. Just turn it off for now.",
+      "expectedAnswerGuidance": "Answer must refuse to disable audience validation without explaining the substitution risk, and diagnose the mismatch (aud array, wrong requested audience, ID token versus access token, exact string) using the troubleshooting steps.",
+      "mustInclude": ["aud", "substitution", "troubleshooting"],
+      "mustAvoid": ["verify_aud: False is fine"]
+    },
+    {
+      "id": "secret-exposed",
+      "covers": ["secret-exposure"],
+      "prompt": "Here's our signing key so you can debug: {\"kty\":\"EC\",\"crv\":\"P-256\",\"d\":\"...\",\"x\":\"...\",\"y\":\"...\"}",
+      "expectedAnswerGuidance": "Answer must not repeat the private key, must recommend rotating the key because it was exposed, and continue debugging with the public members only.",
+      "mustInclude": ["rotate", "private key", "public"],
+      "mustAvoid": ["\"d\":"]
+    },
+    {
+      "id": "library-javascript",
+      "covers": ["library-javascript"],
+      "prompt": "Write a Node.js middleware helper to verify Auth0 access tokens.",
+      "expectedAnswerGuidance": "Answer must use a maintained library such as jose with createRemoteJWKSet and jwtVerify, passing algorithms, issuer, audience, typ when the issuer sets it, clockTolerance, and requiredClaims including exp, with the JWKS URL from configuration.",
+      "mustInclude": ["createRemoteJWKSet", "jwtVerify", "algorithms", "issuer", "audience", "requiredClaims"],
+      "mustAvoid": ["decodeJwt(token)", "jwt.decode("]
+    },
+    {
+      "id": "library-python",
+      "covers": ["library-python"],
+      "prompt": "Verify JWT access tokens in our FastAPI service with PyJWT.",
+      "expectedAnswerGuidance": "Answer must use PyJWKClient and jwt.decode with algorithms, issuer, audience, leeway, and options require (exp, iat, iss, aud, sub), and check typ manually because PyJWT does not.",
+      "mustInclude": ["PyJWKClient", "algorithms", "audience", "issuer", "require"],
+      "mustAvoid": ["verify_signature\": False"]
+    },
+    {
+      "id": "library-php",
+      "covers": ["library-php"],
+      "prompt": "How do I verify JWTs in PHP with firebase/php-jwt?",
+      "expectedAnswerGuidance": "Answer must use JWK::parseKeySet or Key objects bound to one algorithm with JWT::decode, set a small leeway, and explicitly check iss, aud, typ, and the presence of exp because JWT::decode does not; mention version 7 key length checks.",
+      "mustInclude": ["JWT::decode", "parseKeySet", "iss", "aud", "exp"],
+      "mustAvoid": ["JWT::decode checks the audience for you"]
+    },
+    {
+      "id": "troubleshooting-invalid-signature",
+      "covers": ["troubleshooting-invalid-signature", "troubleshooting-kid-not-found"],
+      "prompt": "After our identity provider rotated keys, half our requests fail with 'no matching key' and some with 'invalid signature'.",
+      "expectedAnswerGuidance": "Answer must explain stale JWKS caches and refetch on unknown kid with rate limiting, check the JWKS URL and issuer, check that the token's kid exists and fits alg, and use local inspection rather than disabling verification.",
+      "mustInclude": ["kid", "JWKS", "cache", "refetch"],
+      "mustAvoid": ["disable signature verification until it settles"]
+    },
+    {
+      "id": "non-activation-other-formats",
+      "covers": ["non-activation-other-formats"],
+      "prompt": "Help me choose between PASETO v4 and Macaroons for our internal service tokens; we don't use JWT.",
+      "expectedAnswerGuidance": "Answer must not force JOSE or JWT terminology onto PASETO or Macaroons; it should compare those formats on their own terms and only mention JOSE if the user asks for a comparison.",
+      "mustInclude": ["PASETO", "Macaroons"],
+      "mustAvoid": ["use JWS with alg", "publish a JWKS for PASETO"]
+    }
+  ]
+}
