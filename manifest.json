@@ -92,6 +92,36 @@
       ]
     },
     {
+      "name": "jwt-jose",
+      "description": "Specialist guidance for JSON Web Tokens and the JOSE framework (JWS, JWE, JWA, JWK, JWKS, JWT) based on Auth0's Demystifying JOSE article and the IETF RFCs, covering token anatomy, compact and JSON serializations, signing versus encryption, nested JWTs, algorithm and key selection, JWKS publishing and rotation, secure validation following the JWT BCP, library usage in JavaScript, Python, and PHP, troubleshooting, and a read-only token and JWK inspector.",
+      "version": "1.0.0",
+      "source": "./skills/jwt-jose",
+      "license": "MIT",
+      "keywords": [
+        "jwt",
+        "jose",
+        "jws",
+        "jwe",
+        "jwa",
+        "jwk",
+        "jwks",
+        "json-web-token",
+        "json-web-signature",
+        "json-web-encryption",
+        "json-web-key",
+        "json-web-algorithms",
+        "oauth",
+        "openid-connect",
+        "access-token",
+        "id-token",
+        "token-validation",
+        "cryptography",
+        "rfc7519",
+        "rfc8725",
+        "auth0"
+      ]
+    },
+    {
       "name": "karpathy-guidelines",
       "description": "General-purpose coding-agent discipline based on Andrej Karpathy's observations about LLM coding pitfalls, requiring clarification, success criteria, simplicity, surgical edits, verification, and self-review for software engineering tasks.",
       "version": "1.0.0",
